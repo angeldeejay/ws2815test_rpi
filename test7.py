@@ -59,24 +59,31 @@ def get_colors(intensities):
 
     return [get_color(color) for color in result]
 
-colors = get_colors(8)
-ptr = 0
-
 if __name__ == '__main__':
+    depths_range = [pow(2, i) for i in range(0, 8)]
+    depths_range = depths_range + depths_range[::-1][1::][:-1]
+
     strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
     strip.begin()
-
     print("Press Ctrl-C to quit.")
     try:
+        ptr = 0
         while True:
-            for i in range(0, LED_COUNT):
-                p = (i + ptr) % len(colors)
-                strip.setPixelColor(i, colors[p])
-            strip.show()
-            ptr += 1
-            ptr %= len(colors)
-            time.sleep(0.05)
-
+            depth_index = 1
+            for depths in depths_range:
+                colors = get_colors(depths)
+                print(colors)
+                sleep = 0.1 / pow(depths, 2)
+                for pixel in range(0, round((LED_COUNT / 4) * depth_index)):
+                    print([depths, pixel])
+                    for i in range(0, LED_COUNT):
+                        p = (i + ptr) % len(colors)
+                        strip.setPixelColor(i, colors[p])
+                    strip.show()
+                    ptr += 1
+                    ptr %= len(colors)
+                    time.sleep(sleep)
+                depth_index += 1
     except KeyboardInterrupt:
         for i in range(0, LED_COUNT):
             strip.setPixelColor(i, Color(0, 0, 0))
