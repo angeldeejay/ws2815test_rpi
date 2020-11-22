@@ -9,14 +9,58 @@ LED_BRIGHTNESS = 64  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False    # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
-colors = [
-    Color(255, 0, 0), Color(255, 32, 0), Color(255, 64, 0),Color(255, 96, 0), Color(255, 128, 0), Color(255, 160, 0), Color(255, 192, 0), Color(255, 224, 0),
-    Color(255, 255, 0), Color(224, 255, 0), Color(192, 255, 0), Color(160, 255, 0), Color(128, 255, 0), Color(96, 255, 0), Color(64, 255, 0), Color(32, 255, 0),
-    Color(0, 255, 0), Color(0, 255, 32), Color(0, 255, 64), Color(0, 255, 96), Color(0, 255, 128), Color(0, 255, 160), Color(0, 255, 192), Color(0, 255, 224),
-    Color(0, 255, 255), Color(0, 224, 255), Color(0, 192, 255), Color(0, 160, 255), Color(0, 128, 255), Color(0, 96, 255), Color(0, 64, 255), Color(0, 32, 255),
-    Color(0, 0, 255), Color(32, 0, 255), Color(64, 0, 255), Color(96, 0, 255), Color(128, 0, 255), Color(160, 0, 255), Color(192, 0, 255), Color(224, 0, 255),
-    Color(255, 0, 255), Color(255, 0, 224), Color(255, 0, 192), Color(255, 0, 160), Color(255, 0, 128), Color(255, 0, 96), Color(255, 0, 64), Color(255, 0, 32)
-]
+def get_hex_value(i):
+    return max(0, min(255, int(i)))
+
+def get_color(color_values):
+    r = get_hex_value(color_values[0])
+    g = get_hex_value(color_values[1])
+    b = get_hex_value(color_values[2])
+    return Color(r, g, b)
+
+def get_next_index(i):
+    if i == 2:
+        return 0
+    return i + 1
+
+def get_prev_index(i):
+    if i == 0:
+        return 2
+    return i - 1
+
+
+def turn_off_prev(stay_index, turn_off_index, intensities, depth):
+    result = []
+    for value in range(intensities - 1, -1, -1):
+        color_values = [0, 0, 0]
+        color_values[stay_index] = intensities * depth
+        color_values[turn_off_index] = value * depth
+        if color_values not in result:
+            result.append(color_values)
+
+    return result
+
+def get_colors(intensities):
+    result = []
+    depth = 256 / intensities
+    for stay_index in range(0, 3):
+        prev_index = get_prev_index(stay_index)
+        next_index = get_next_index(stay_index)
+        for value in range(0, intensities + 1):
+            color_values = [0, 0, 0]
+            color_values[stay_index] = intensities * depth
+            color_values[next_index] = value * depth
+            if color_values not in result:
+                result.append(color_values)
+
+        for color_values in turn_off_prev(next_index, stay_index, intensities, depth):
+            if color_values not in result:
+                result.append(color_values)
+
+    return [get_color(color) for color in result]
+
+bits_density = 8
+colors = get_colors(bits_density)
 ptr = 0
 
 if __name__ == '__main__':
