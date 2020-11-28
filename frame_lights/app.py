@@ -17,15 +17,6 @@ class LedStrip:
         self.channel = 1 if gpio_pin in [13, 19, 41, 45, 53] else 0
         self.thread = None
         self.thread_active = False
-        self.led_strip = PixelStrip(
-            self.led_count,
-            self.gpio_pin,
-            self.frequency,
-            self.dma,
-            False,
-            self.brightness,
-            self.channel
-        )
 
     def __lambda(self, instance):
         while True:
