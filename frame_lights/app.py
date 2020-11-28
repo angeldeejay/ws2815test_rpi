@@ -1,11 +1,12 @@
-from sys import argv
-from signal import signal, SIGSEGV
-from threading import Thread
-from time import sleep
 from animations.christmas import animate as christmas_animation
 from animations.rainbow import animate as rainbow_animation
+from animations.randomize import animate as randomize_animation
 from animations.snow import animate as snow_animation
 from rpi_ws281x import PixelStrip, Color
+from signal import signal, SIGSEGV
+from sys import argv
+from threading import Thread
+from time import sleep
 from traceback import format_exc
 
 class LedStrip:
@@ -16,26 +17,24 @@ class LedStrip:
         self.led_count = int(led_count)
         self.frequency = int(self.__default_value(frequency, 800000))
         self.dma = 10
-        self.brightness = 64
+        self.brightness = 32
         self.interval = float(self.__default_value(interval, 0.05))
         self.reverse = self.__default_value(reverse, False)
         self.channel = 1 if gpio_pin in [13, 19, 41, 45, 53] else 0
         self.thread = None
         self.thread_active = False
         self.led_strip = PixelStrip(self.led_count, self.gpio_pin, self.frequency, self.dma, False, self.brightness, self.channel)
-        self.changed = False
 
     def set_animation(self, animation_fn):
         self.animation = self.__default_value(animation_fn, self.__lambda)
 
-    def set_color(self, i, color):
+    def set_pixel_color(self, i, color):
         try:
             self.led_strip.setPixelColor(i, color)
-            self.changed = True
         except:
             pass
 
-    def repaint(self):
+    def show(self):
         try:
             self.led_strip.show()
             True
@@ -73,13 +72,12 @@ class LedStrip:
             while self.thread.is_alive():
                 sleep(0.01)
 
-        if self.changed:
-            try:
-                for i in range(0, self.led_count):
-                    self.set_color(i, 0, 0, 0)
-                self.repaint()
-            except:
-                pass
+        try:
+            for i in range(0, self.led_count):
+                self.set_pixel_color(i, Color(0, 0, 0))
+            self.show()
+        except:
+            pass
 
         self.thread = None
         self.changed = False
@@ -109,14 +107,16 @@ if __name__ == '__main__':
     ]
 
     try:
-        print("Press Ctrl-C to quit.")
         if len(argv) > 1 and argv[1] == '--off':
-            stop_animations(strips)
+            for strip in strips:
+                strip.begin()
         else:
+            print("Press Ctrl-C to quit.")
             animations = [
+                ("Randomize", randomize_animation),
+                ("Rainbow",   rainbow_animation),
+                ("Snow",      snow_animation),
                 ("Christmas", christmas_animation),
-                ("Snow", snow_animation),
-                ("Rainbow", rainbow_animation),
             ]
 
             animation_index = 0

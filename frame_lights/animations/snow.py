@@ -4,10 +4,8 @@ from traceback import format_exc
 
 def animate(instance):
     colors = [
-        Color(64, 0, 0), Color(128, 0, 0), Color(191, 0, 0), Color(255, 0, 0), Color(255, 0, 0),
-        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
-        Color(0, 64, 0), Color(0, 128, 0), Color(0, 191, 0), Color(0, 255, 0), Color(0, 255, 0),
-        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(32, 32, 32), Color(64, 64, 64), Color(128, 128, 128), Color(191, 191, 191), Color(255, 255, 255), Color(255, 255, 255),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
     ]
     colors.reverse() if instance.reverse else True
     try:

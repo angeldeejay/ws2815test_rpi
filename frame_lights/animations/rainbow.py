@@ -62,8 +62,8 @@ def animate(instance):
                 break
             for i in range(0, instance.led_count):
                 p = i % len(colors)
-                instance.set_color(i, colors[p])
-            instance.repaint()
+                instance.set_pixel_color(i, colors[p])
+            instance.show()
             if instance.reverse:
                 colors = colors[1:] + [colors[0]]
             else:
