@@ -12,14 +12,17 @@ def animation_mock(instance):
         instance.led_strip.begin()
         while True:
             if not instance.thread_active: break
+            instance.log(str(ptr))
             pixels_range = range(instance.led_count - 1, -1, -1) if instance.reverse else range(0, instance.led_count)
             for i in pixels_range:
                 p = (i + ptr) % len(colors)
                 instance.led_strip.setPixelColor(i, colors[p])
             instance.led_strip.show()
-            ptr += 1 if not instance.reverse else 1
+            if instance.reverse:
+                ptr = ptr + 1
+            else:
+                ptr = ptr - 1
             ptr %= len(colors)
-            instance.log(str(ptr))
             sleep(instance.interval)
     except Exception:
         error_output = "\n\n\t" + format_exc().replace("\n", "\n\t")

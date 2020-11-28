@@ -44,8 +44,7 @@ class LedStrip:
         self.log("Thread stopped")
 
     def log(self, message, level="debug"):
-        print(str('[{:^7}]'.format(level.upper())) + ' {' + str(self.name) + "}:")
-        print(message)
+        print(str('[{:^7}]'.format(level.upper())) + ' {' + str(self.name) + "}: " + str(message))
 
     def __repr__(self):
         return self.__class__.__name__ + str(vars(self))
