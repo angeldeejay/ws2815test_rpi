@@ -2,33 +2,46 @@ from time import sleep
 from rpi_ws281x import Color
 from traceback import format_exc
 
-def animation_mock(instance):
+def animate(instance):
     colors = [
-        Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), 
-        Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), 
+        Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), Color(128, 0, 0), Color(64, 0, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), Color(0, 128, 0), Color(0, 64, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), Color(128, 0, 0), Color(64, 0, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), Color(0, 128, 0), Color(0, 64, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), Color(128, 0, 0), Color(64, 0, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), Color(0, 128, 0), Color(0, 64, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(255, 0, 0), Color(255, 0, 0), Color(255, 0, 0), Color(128, 0, 0), Color(64, 0, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
+        Color(0, 255, 0), Color(0, 255, 0), Color(0, 255, 0), Color(0, 128, 0), Color(0, 64, 0),
+        Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0),
     ]
-    ptr = 0
+    colors.reverse() if instance.reverse else True
     try:
-        instance.led_strip.begin()
+        instance.begin()
         while True:
-            if not instance.thread_active: break
-            instance.log(str(ptr))
-            pixels_range = range(instance.led_count - 1, -1, -1) if instance.reverse else range(0, instance.led_count)
-            for i in pixels_range:
-                p = (i + ptr) % len(colors)
-                instance.led_strip.setPixelColor(i, colors[p])
-            instance.led_strip.show()
+            if not instance.thread_active:
+                break
+            for i in range(0, instance.led_count):
+                p = i % len(colors)
+                instance.set_color(i, colors[p])
+            instance.repaint()
             if instance.reverse:
-                ptr = ptr + 1
+                colors = colors[1:] + [colors[0]]
             else:
-                ptr = ptr - 1
-            ptr %= len(colors)
+                colors.insert(0, colors.pop())
             sleep(instance.interval)
     except Exception:
+        pass
         error_output = "\n\n\t" + format_exc().replace("\n", "\n\t")
         instance.log("Couldn't start strip light:\n\t* strip data: " + str(instance) + "\n\t* reason:" + error_output + "\n", "error")
         while True:
-            if not instance.thread_active: break
-        pass
+            if not instance.thread_active:
+                break
 
     
