@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import signal, time, sys, threading
+import signal, time, sys, threading, platform, subprocess, os, socket
+from socket import AF_INET, SOCK_STREAM, SHUT_RDWR
 from magichue import discover_bulbs, Light
 from datetime import datetime, timedelta
 
@@ -57,11 +58,15 @@ def get_colors(intensities):
     return [get_color(color) for color in result]
 
 STOP_THREADS = False
-def colorize(light, colors, interval):
+def turn_on(light, colors, interval):
+    print("Waking up " + str(light) + "...")
+    light.rgb = (0, 0, 0)
+    light.on = True
     i = 0;
     while True:
         global STOP_THREADS
-        if STOP_THREADS:
+        global TERMINATE
+        if STOP_THREADS or TERMINATE:
             break
         color = colors[i]
         light.rgb = (color[0], color[1], color[2])
@@ -71,63 +76,125 @@ def colorize(light, colors, interval):
             i = 0
         time.sleep(interval)
 
+def turn_off(light):
+    while True:
+        if light.on and light.rgb != (0, 0, 0):
+            print('Setting color to black in ' + str(light) + '...')
+            light.rgb = (0, 0, 0)
+            light.on = True
+        elif light.on:
+            print('Shutting down ' + str(light) + '...')
+            light.on = False
+        else:
+            print(str(light) + ' is off...')
+            break
+        time.sleep(0.1)
+
+def shutdown():
+    global STOP_THREADS
+    global THREADS
+    global TERMINATE
+    STOP_THREADS = True
+    TERMINATE = True
+    for thread_index, light, thread in THREADS:
+        turn_off(light)
+
+def ping(host):
+    alive = False
+    for port in [4840, 80]:
+        try:
+            sock = socket.socket(AF_INET, SOCK_STREAM)
+            sock.settimeout(0.5)
+            sock.connect((host, int(port)))
+            alive = True
+            sock.shutdown(SHUT_RDWR)
+        except Exception as e:
+            pass
+        if alive:
+            break
+    #print("Main host " + host + ": " + str(alive))
+    return alive
+
+MAIN_HOST="192.168.1.13"
+TERMINATE = False
 ARGS = sys.argv
 COLORS = get_colors(16)
-START_AT = '17:45:00'
-END_AT = '02:45:00'
+START_AT = '17:00:00'
+END_AT = '06:00:00'
 DATE_FMT = '%Y/%m/%d '
 TIME_FMT = '%H:%M:%S'
 
-def signal_term_handler(signal, frame):
-    STOP_THREADS = True
-    for light, thread in THREADS:
-        print('shutting down ' + str(light) + '...')
-        thread.join()
-        light.rgb = (0, 0, 0)
-        light.on = False
-    sys.exit(0)
+def change_test_dates():
+    global START_AT
+    global END_AT
+    while True:
+        global TERMINATE
+        if TERMINATE:
+            break
+        now = datetime.now()
+        START_AT = (now + timedelta(0, 5)).strftime(TIME_FMT)
+        END_AT = (now + timedelta(0, 10)).strftime(TIME_FMT)
+        print("<TEST> Should turn on at: " + START_AT)
+        print("<TEST> Should turn off at: " + END_AT)
+        time.sleep(10)
 
-signal.signal(signal.SIGTERM, signal_term_handler)
+THREADS = []
+def create_thread(thread_index, light):
+    global THREADS
+    thread = threading.Thread(target=turn_on, daemon=True, args=(light, COLORS, 0.1))
+    if len(THREADS) > thread_index:
+        THREADS[thread_index] = (thread_index, light, thread)
+    else:
+        THREADS.append((thread_index, light, thread))
+
+TEST_THREAD = None
+if len(ARGS) > 1 and ARGS[1] == '--test':
+    TEST_THREAD = (threading.Thread(target=change_test_dates)).start()
+
+if len(ARGS) > 1 and ARGS[1] == '--on':
+    START_AT = '00:00:00'
+    END_AT = '23:59:59'
 
 if len(ARGS) > 1 and ARGS[1] == '--off':
     for light in LIGHTS:
-        print("Shutting down " + str(light) + "...")
-        if light.on:
-            light.rgb = (0, 0, 0)
-            light.on = False
+        turn_off(light)
 else:
-    THREADS = []
+    thread_index = 0
     for light in LIGHTS:
-        thread = threading.Thread(target=colorize, daemon=True, args=(light, COLORS, 0.1))
-        THREADS.append((light, thread))
+        thread = threading.Thread(target=turn_on, daemon=True, args=(light, COLORS, 0.1))
+        create_thread(thread_index, light)
+        thread_index = thread_index + 1
 
-    while True:
-        # datetime object containing current date and time
-        now = datetime.now()
+    try:
+        print("Should turn on at: " + START_AT)
+        print("Should turn off at: " + END_AT)
+        while True:
+            # datetime object containing current date and time
+            now = datetime.now()
 
-        current_start = datetime.strptime(now.strftime(DATE_FMT) + START_AT, DATE_FMT + TIME_FMT)
-        delta_interval = datetime.strptime(now.strftime(DATE_FMT) + END_AT, DATE_FMT + TIME_FMT) - current_start
+            current_start = datetime.strptime(now.strftime(DATE_FMT) + START_AT, DATE_FMT + TIME_FMT)
+            delta_interval = datetime.strptime(now.strftime(DATE_FMT) + END_AT, DATE_FMT + TIME_FMT) - current_start
 
-        if delta_interval.days < 0:
-            delta_interval = timedelta(days=0, seconds=delta_interval.seconds, microseconds=delta_interval.microseconds)
+            if delta_interval.days < 0:
+                delta_interval = timedelta(days=0, seconds=delta_interval.seconds, microseconds=delta_interval.microseconds)
 
-        current_end = current_start + delta_interval
-        last_start = current_start + timedelta(days=-1)
-        last_end = current_end + timedelta(days=-1)
+            current_end = current_start + delta_interval
+            last_start = current_start + timedelta(days=-1)
+            last_end = current_end + timedelta(days=-1)
 
-        LIGHT_ON = (current_start <= now <= current_end or last_start <= now <= last_end)
-        if LIGHT_ON != True:
-            STOP_THREADS = True
-        for light, thread in THREADS:
-            if LIGHT_ON:
-                if thread.is_alive() != True:
-                    print("Waking up " + str(light) + "...")
-                    light.rgb = (0, 0, 0)
-                    thread.start()
-            else:
-                if thread.is_alive() == True:
-                    print("Sleeping " + str(light) + "...")
-                    thread.join()
-                    light.rgb = (0, 0, 0)
-        time.sleep(0.1)
+            PING_ALIVE = ping(MAIN_HOST)
+            LIGHT_ON = (current_start <= now <= current_end or last_start <= now <= last_end) and PING_ALIVE
+            STOP_THREADS = not LIGHT_ON
+
+            for thread_index, light, thread in THREADS:
+                if LIGHT_ON:
+                    if not thread.is_alive():
+                        thread.start()
+                else:
+                    if thread.is_alive():
+                        turn_off(light)
+                        create_thread(thread_index, light)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        shutdown()
 
