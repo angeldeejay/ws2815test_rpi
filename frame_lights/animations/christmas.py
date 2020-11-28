@@ -1,5 +1,6 @@
 from time import sleep
 from rpi_ws281x import Color
+from traceback import format_exc
 
 def animation_mock(instance):
     colors = [
@@ -20,10 +21,11 @@ def animation_mock(instance):
             ptr += 1
             ptr %= len(colors)
             sleep(instance.interval)
-    except Exception as e:
-        pass
-        instance.log("Couldn't start strip light:\n\t* strip data: " + str(instance) + "\n\t* reason: " + str(e) + "\n", "error")
+    except Exception:
+        e = format_exc().join()
+        instance.log("Couldn't start strip light:\n\t* strip data: " + str(instance) + "\n\t* reason:\n" + e + "\n", "error")
         while True:
             if not instance.thread_active: break
+        pass
 
     
