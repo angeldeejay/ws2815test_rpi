@@ -17,7 +17,7 @@ def animation_mock(instance):
                 p = (i + ptr) % len(colors)
                 instance.led_strip.setPixelColor(i, colors[p])
             instance.led_strip.show()
-            ptr += 1
+            ptr += 1 if not instance.reverse else 1
             ptr %= len(colors)
             instance.log(str(ptr))
             sleep(instance.interval)
