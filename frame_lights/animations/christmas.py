@@ -22,8 +22,8 @@ def animation_mock(instance):
             ptr %= len(colors)
             sleep(instance.interval)
     except Exception:
-        e = format_exc().join()
-        instance.log("Couldn't start strip light:\n\t* strip data: " + str(instance) + "\n\t* reason:\n" + e + "\n", "error")
+        error_output = format_exc()
+        instance.log("Couldn't start strip light:\n\t* strip data: " + str(instance) + "\n\t* reason:\n" + error_output + "\n", "error")
         while True:
             if not instance.thread_active: break
         pass
