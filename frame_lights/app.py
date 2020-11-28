@@ -17,6 +17,7 @@ class LedStrip:
         self.channel = 1 if gpio_pin in [13, 19, 41, 45, 53] else 0
         self.thread = None
         self.thread_active = False
+        self.led_strip = PixelStrip(self.led_count, self.gpio_pin, self.frequency, self.dma, False, self.brightness, self.channel)
 
     def __lambda(self, instance):
         while True:
@@ -43,7 +44,8 @@ class LedStrip:
         self.log("Thread stopped")
 
     def log(self, message, level="debug"):
-        print(str('[{:^7}]'.format(level.upper())) + ' {' + str(self.name) + "}: " + message)
+        print(str('[{:^7}]'.format(level.upper())) + ' {' + str(self.name) + "}:")
+        print(message)
 
     def __repr__(self):
         return self.__class__.__name__ + str(vars(self))
@@ -54,13 +56,13 @@ if __name__ == '__main__':
     test_strip_right = LedStrip(name='5050 - RIGHT', gpio_pin=18, led_count=60, animation=animation_mock)
     test_strip_left = LedStrip(name='5050 - LEFT', gpio_pin=13, led_count=60, reverse=True, animation=animation_mock)
 
-    test_strip_top.start()
-    test_strip_right.start()
+    # test_strip_top.start()
+    # test_strip_right.start()
     test_strip_left.start()
     try:
         while True:
             sleep(1)
     except KeyboardInterrupt:
-        test_strip_top.stop()
-        test_strip_right.stop()
+        # test_strip_top.stop()
+        # test_strip_right.stop()
         test_strip_left.stop()
