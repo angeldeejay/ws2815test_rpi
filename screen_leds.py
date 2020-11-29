@@ -4,9 +4,6 @@ from socket import AF_INET, SOCK_STREAM, SHUT_RDWR
 from magichue import discover_bulbs, Light
 from datetime import datetime, timedelta
 
-IPS = discover_bulbs()
-LIGHTS = [Light(strip_ip) for strip_ip in IPS]
-
 def get_hex_value(i):
     return max(0, min(255, int(i)))
 
@@ -57,7 +54,6 @@ def get_colors(intensities):
 
     return [get_color(color) for color in result]
 
-STOP_THREADS = False
 def turn_on(light, colors, interval):
     print("Waking up " + str(light) + "...")
     light.rgb = (0, 0, 0)
@@ -104,7 +100,7 @@ def ping(host):
     for port in [4840, 80]:
         try:
             sock = socket.socket(AF_INET, SOCK_STREAM)
-            sock.settimeout(0.5)
+            sock.settimeout(0.75)
             sock.connect((host, int(port)))
             alive = True
             sock.shutdown(SHUT_RDWR)
@@ -115,18 +111,10 @@ def ping(host):
     #print("Main host " + host + ": " + str(alive))
     return alive
 
-MAIN_HOST="192.168.1.13"
-TERMINATE = False
-ARGS = sys.argv
-COLORS = get_colors(16)
-START_AT = '17:00:00'
-END_AT = '06:00:00'
-DATE_FMT = '%Y/%m/%d '
-TIME_FMT = '%H:%M:%S'
-
 def change_test_dates():
     global START_AT
     global END_AT
+    global TIME_FMT
     while True:
         global TERMINATE
         if TERMINATE:
@@ -138,7 +126,6 @@ def change_test_dates():
         print("<TEST> Should turn off at: " + END_AT)
         time.sleep(10)
 
-THREADS = []
 def create_thread(thread_index, light):
     global THREADS
     thread = threading.Thread(target=turn_on, daemon=True, args=(light, COLORS, 0.1))
@@ -147,7 +134,35 @@ def create_thread(thread_index, light):
     else:
         THREADS.append((thread_index, light, thread))
 
+def turn_on_condition(start_at, end_at, date_fmt, time_fmt):
+    # now = datetime.now()
+    # current_start = datetime.strptime(now.strftime(date_fmt) + start_at, date_fmt + time_fmt)
+    # delta_interval = datetime.strptime(now.strftime(date_fmt) + end_at, date_fmt + time_fmt) - current_start
+
+    # if delta_interval.days < 0:
+    #     delta_interval = timedelta(days=0, seconds=delta_interval.seconds, microseconds=delta_interval.microseconds)
+
+    # current_end = current_start + delta_interval
+    # last_start = current_start + timedelta(days=-1)
+    # last_end = current_end + timedelta(days=-1)
+
+    # return current_start <= now <= current_end or last_start <= now <= last_end
+    return True
+
+IPS = discover_bulbs()
+LIGHTS = [Light(strip_ip) for strip_ip in IPS]
+MAIN_HOST="192.168.1.13"
+TERMINATE = False
+ARGS = sys.argv
+COLORS = get_colors(16)
+START_AT = '17:00:00'
+END_AT = '06:00:00'
+DATE_FMT = '%Y/%m/%d '
+TIME_FMT = '%H:%M:%S'
+THREADS = []
 TEST_THREAD = None
+STOP_THREADS = False
+
 if len(ARGS) > 1 and ARGS[1] == '--test':
     TEST_THREAD = (threading.Thread(target=change_test_dates)).start()
 
@@ -169,21 +184,8 @@ else:
         print("Should turn on at: " + START_AT)
         print("Should turn off at: " + END_AT)
         while True:
-            # datetime object containing current date and time
-            now = datetime.now()
-
-            current_start = datetime.strptime(now.strftime(DATE_FMT) + START_AT, DATE_FMT + TIME_FMT)
-            delta_interval = datetime.strptime(now.strftime(DATE_FMT) + END_AT, DATE_FMT + TIME_FMT) - current_start
-
-            if delta_interval.days < 0:
-                delta_interval = timedelta(days=0, seconds=delta_interval.seconds, microseconds=delta_interval.microseconds)
-
-            current_end = current_start + delta_interval
-            last_start = current_start + timedelta(days=-1)
-            last_end = current_end + timedelta(days=-1)
-
             PING_ALIVE = ping(MAIN_HOST)
-            LIGHT_ON = (current_start <= now <= current_end or last_start <= now <= last_end) and PING_ALIVE
+            LIGHT_ON = turn_on_condition(START_AT, END_AT, DATE_FMT, TIME_FMT) and PING_ALIVE
             STOP_THREADS = not LIGHT_ON
 
             for thread_index, light, thread in THREADS:
