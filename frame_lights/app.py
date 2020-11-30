@@ -17,7 +17,7 @@ class LedStrip:
         self.led_count = int(led_count)
         self.frequency = int(self.__default_value(frequency, 800000))
         self.dma = 10
-        self.brightness = 32
+        self.brightness = 30
         self.interval = float(self.__default_value(interval, 0.05))
         self.reverse = self.__default_value(reverse, False)
         self.channel = 1 if gpio_pin in [13, 19, 41, 45, 53] else 0
