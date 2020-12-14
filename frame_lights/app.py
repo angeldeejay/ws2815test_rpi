@@ -101,8 +101,7 @@ def start_animations(strips, animation_name, animation_fn):
 
 if __name__ == '__main__':
     strips = [
-        LedStrip(name='WS2815 - Yellow', gpio_pin=21, interval=0.05, led_count=300),
-        LedStrip(name='5050 - Red', gpio_pin=18, interval=0.05, led_count=60),
+        LedStrip(name='5050 - Red', gpio_pin=18, interval=0.05, led_count=120),
         LedStrip(name='5050 - Blue', gpio_pin=13, interval=0.05, led_count=60, reverse=True),
     ]
 
