@@ -168,14 +168,13 @@ alive_thread.start()
 if len(ARGS) > 1 and ARGS[1] == '--test':
     TEST_THREAD = (threading.Thread(target=change_test_dates)).start()
 
-else if len(ARGS) > 1 and ARGS[1] == '--on':
+if len(ARGS) > 1 and ARGS[1] == '--on':
     START_AT = '00:00:00'
     END_AT = '23:59:59'
 
-else if len(ARGS) > 1 and ARGS[1] == '--off':
+if len(ARGS) > 1 and ARGS[1] == '--off':
     for light in LIGHTS:
         turn_off(light)
-
 else:
     thread_index = 0
     for light in LIGHTS:

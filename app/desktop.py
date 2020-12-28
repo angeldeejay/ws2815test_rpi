@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import socket, binascii, pythonping, threading, time
+import socket, binascii, pythonping, threading, time, sys
 from datetime import datetime, timedelta
 from sys import argv
 from lib.utils import turn_on_condition
@@ -219,15 +219,16 @@ def shutdown():
 alive_thread = threading.Thread(target=is_alive)
 alive_thread.start()
 
+controller = SP108E(ip=CONTROLLER_IP, port=CONTROLLER_PORT)
 
 if len(ARGS) > 1 and ARGS[1] == '--test':
     (threading.Thread(target=change_test_dates)).start()
 
-else if len(ARGS) > 1 and ARGS[1] == '--on':
+if len(ARGS) > 1 and ARGS[1] == '--on':
     START_AT = '00:00:00'
     END_AT = '23:59:59'
 
-else if len(ARGS) > 1 and ARGS[1] == '--off':
+if len(ARGS) > 1 and ARGS[1] == '--off':
     shutdown()
     while True:
         STATE = controller.get_device_settings()
@@ -236,9 +237,7 @@ else if len(ARGS) > 1 and ARGS[1] == '--off':
         else:
             break
         time.sleep(1)
-
 else:
-    controller = SP108E(ip=CONTROLLER_IP, port=CONTROLLER_PORT)
     try:
         while True:
             if controller.is_device_ready():
