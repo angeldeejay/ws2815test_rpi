@@ -184,6 +184,7 @@ END_AT = '06:00:00'
 DATE_FMT = '%Y/%m/%d '
 TIME_FMT = '%H:%M:%S'
 MAIN_HOST="192.168.1.13"
+ARGS = sys.argv
 
 def is_alive():
     global IS_ALIVE
@@ -218,8 +219,25 @@ def shutdown():
 alive_thread = threading.Thread(target=is_alive)
 alive_thread.start()
 
-if __name__ == '__main__':
 
+if len(ARGS) > 1 and ARGS[1] == '--test':
+    (threading.Thread(target=change_test_dates)).start()
+
+else if len(ARGS) > 1 and ARGS[1] == '--on':
+    START_AT = '00:00:00'
+    END_AT = '23:59:59'
+
+else if len(ARGS) > 1 and ARGS[1] == '--off':
+    shutdown()
+    while True:
+        STATE = controller.get_device_settings()
+        if STATE["turned_on"]:
+            controller.toggle_off_on()
+        else:
+            break
+        time.sleep(1)
+
+else:
     controller = SP108E(ip=CONTROLLER_IP, port=CONTROLLER_PORT)
     try:
         while True:
