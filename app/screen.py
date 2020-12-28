@@ -160,7 +160,7 @@ def is_alive():
                 IS_ALIVE = LAST_PING
                 LAST_PING = PING_RESULT
 
-        time.sleep(5)
+        time.sleep(1)
 
 alive_thread = threading.Thread(target=is_alive)
 alive_thread.start()
