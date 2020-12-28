@@ -227,10 +227,14 @@ if __name__ == '__main__':
                 break
             time.sleep(0.5)
         if len(argv) > 1 and argv[1] == '--off':
-            STATE = controller.get_device_settings()
             shutdown()
-            if STATE["turned_on"]:
-                controller.toggle_off_on()
+            while True:
+                STATE = controller.get_device_settings()
+                if STATE["turned_on"]:
+                    controller.toggle_off_on()
+                else:
+                    break
+                time.sleep(1)
         else:
             print("Should turn on at: " + START_AT)
             print("Should turn off at: " + END_AT)
@@ -250,5 +254,10 @@ if __name__ == '__main__':
         pass
     finally:
         shutdown()
-        if STATE["turned_on"]:
-            controller.toggle_off_on()
+        while True:
+            STATE = controller.get_device_settings()
+            if STATE["turned_on"]:
+                controller.toggle_off_on()
+            else:
+                break
+            time.sleep(1)
