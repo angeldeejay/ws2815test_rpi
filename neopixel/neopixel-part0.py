@@ -140,10 +140,6 @@ def fadeToBlack(ledNo, fadeValue):
 
     pixels[ledNo] = ( int(r), int(g), int(b) )
 
-
-
-
-
 def FireCustom(CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles):
 #   CoolingRangeStart: (0-255) cooling random value, start range
 #   CoolingRangeEnd: (0-255) cooling random value, end range
@@ -649,7 +645,7 @@ while True:
     # theaterChaseCustom(colorobj, darkspace, cycles, SpeedDelay)
     print("theaterChaseCustom")
     cobj = [(255,255,0),(0,0,255),(255,0,0)]
-    theaterChaseCustom(cobj, 2, 100, 0.2)
+    TheaterChaseCustom(cobj, 2, 100, 0.2)
     time.sleep(wait_time)
 
     # makes the strand of pixels show Fire
