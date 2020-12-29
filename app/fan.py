@@ -1,7 +1,6 @@
 import time, board, neopixel
 from sys import argv
 from lib.animations import *
-from lib.colors import *
 
 pixels = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
 if __name__ == '__main__':

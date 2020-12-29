@@ -6,6 +6,7 @@ import math
 import serial
 import ctypes
 from lib.utils import *
+from lib.colors import *
 
 ### ColorAll2Color allows two alternating colors to be shown
 def ColorAll2Color(pixels, c1, c2):
