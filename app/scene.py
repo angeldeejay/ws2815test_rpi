@@ -82,7 +82,7 @@ if __name__ == '__main__':
                         controller = None
                         desktop_lights.turn_off()
 
-                time.sleep(1)
+                time.sleep(4)
     except KeyboardInterrupt:
         print("\nExiting...")
         pass
