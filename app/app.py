@@ -9,6 +9,7 @@ from threading import Thread
 from time import sleep
 from traceback import format_exc
 
+
 class LedStrip:
     def __init__(self, name, gpio_pin=None, led_count=None, reverse=None, interval=None, frequency=None):
         self.animation = None
@@ -23,7 +24,8 @@ class LedStrip:
         self.channel = 1 if gpio_pin in [13, 19, 41, 45, 53] else 0
         self.thread = None
         self.thread_active = False
-        self.led_strip = PixelStrip(self.led_count, self.gpio_pin, self.frequency, self.dma, False, self.brightness, self.channel)
+        self.led_strip = PixelStrip(
+            self.led_count, self.gpio_pin, self.frequency, self.dma, False, self.brightness, self.channel)
 
     def set_animation(self, animation_fn):
         self.animation = self.__default_value(animation_fn, self.__lambda)
@@ -52,7 +54,8 @@ class LedStrip:
 
     def __lambda(self, instance):
         while True:
-            if not instance.thread_active: break
+            if not instance.thread_active:
+                break
             sleep(instance.interval)
 
     def __default_value(self, value, default=None):
@@ -61,7 +64,8 @@ class LedStrip:
     def start(self):
         if self.animation is not None:
             self.thread_active = True
-            self.thread = Thread(target=self.animation, daemon=True, args=[self])
+            self.thread = Thread(target=self.animation,
+                                 daemon=True, args=[self])
             self.log("Starting thread")
             self.thread.start()
 
@@ -84,14 +88,17 @@ class LedStrip:
         self.log("Shutted down")
 
     def log(self, message, level="debug"):
-        print(str('[{:^7}]'.format(level.upper())) + ' {' + str(self.name) + "}: " + str(message))
+        print(str('[{:^7}]'.format(level.upper())) +
+              ' {' + str(self.name) + "}: " + str(message))
 
     def __repr__(self):
         return self.__class__.__name__ + str(vars(self))
 
+
 def stop_animations(strips):
     for strip in strips:
         strip.stop()
+
 
 def start_animations(strips, animation_name, animation_fn):
     print("Starting animation: " + animation_name)
@@ -99,10 +106,12 @@ def start_animations(strips, animation_name, animation_fn):
         strip.set_animation(animation_fn)
         strip.start()
 
+
 if __name__ == '__main__':
     strips = [
         LedStrip(name='5050 - Red', gpio_pin=18, interval=0.05, led_count=120),
-        LedStrip(name='5050 - Blue', gpio_pin=13, interval=0.05, led_count=60, reverse=True),
+        LedStrip(name='5050 - Blue', gpio_pin=13,
+                 interval=0.05, led_count=60, reverse=True),
     ]
 
     try:
@@ -124,7 +133,8 @@ if __name__ == '__main__':
                 start_animations(strips, animation_name, animation_fn)
                 sleep(30)
                 stop_animations(strips)
-                animation_index = 0 if animation_index == len(animations) - 1 else (animation_index + 1)
+                animation_index = 0 if animation_index == len(
+                    animations) - 1 else (animation_index + 1)
 
     except KeyboardInterrupt:
         pass

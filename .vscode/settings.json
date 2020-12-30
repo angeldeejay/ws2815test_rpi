@@ -18,6 +18,13 @@
     "peacock.color": "#5e3e6f",
     "peacock.remoteColor": "#5e3e6f",
     "cSpell.words": [
-        "cmnd"
+        "INET",
+        "cmnd",
+        "pyledshop"
+    ],
+    "python.pythonPath": "/opt/conda/bin/python",
+    "cSpell.ignoreWords": [
+        "econnreset",
+        "errno"
     ]
 }

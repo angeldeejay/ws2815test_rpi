@@ -1,8 +1,11 @@
-import time, board, neopixel
+import time
+import board
+import neopixel
 from sys import argv
 from lib.animations import *
 
-pixels = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+pixels = neopixel.NeoPixel(
+    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
 if __name__ == '__main__':
     try:
         if len(argv) > 1 and argv[1] == '--off':
