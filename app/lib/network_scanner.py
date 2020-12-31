@@ -95,7 +95,7 @@ class NetworkScanner:
             self.__out_queue.put((ip, ip_status))
             self.__in_queue.task_done()
             self.__in_queue.put((ip, ip_status))
-            time.sleep(0.1)
+            time.sleep(self.timeout)
 
     def __process(self):
         self.__running = True
