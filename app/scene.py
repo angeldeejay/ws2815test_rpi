@@ -59,6 +59,8 @@ def shutdown():
             while sonoff.on:
                 sonoff.turn_off()
                 time.sleep(1)
+    print(__name__, sonoff, sep=' => ')
+    print(__name__, controller, sep=' => ')
     scanner.stop()
 
 
