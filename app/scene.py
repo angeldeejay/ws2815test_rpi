@@ -68,6 +68,7 @@ def shutdown():
 
         if controller.state.is_on:
             try:
+                controller.set_custom(1)
                 controller.turn_off()
             except:
                 pass
