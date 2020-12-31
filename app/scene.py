@@ -53,7 +53,6 @@ def shutdown():
             controller.sync_state()
 
         try:
-            controller.set_custom(1)
             controller.turn_off()
             controller.close()
         except:
@@ -76,10 +75,10 @@ if __name__ == '__main__':
     from lib.pyledshop import WifiLedShopLight
     from sys import argv
 
-    try:
-        if len(argv) > 1 and argv[1] == '--off':
-            shutdown()
-        else:
+    if len(argv) > 1 and argv[1] == '--off':
+        shutdown()
+    else:
+        try:
             while True:
                 preset = None
                 speed = None
@@ -132,8 +131,8 @@ if __name__ == '__main__':
                         controller = None
 
                 time.sleep(1)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        shutdown()
-        pass
+        except KeyboardInterrupt:
+            pass
+        finally:
+            shutdown()
+            pass

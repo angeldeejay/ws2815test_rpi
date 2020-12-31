@@ -10,7 +10,7 @@ StartLimitInterval=0
 StartLimitBurst=120
 ExecStart=/usr/bin/env python3 -u /home/pi/ws2815test_rpi/app/scene.py
 ExecStopPost=-/usr/bin/env python3 -u /home/pi/ws2815test_rpi/app/scene.py --off
-TimeoutStopSec=300
+TimeoutStopSec=60
 
 [Install]
 WantedBy=multi-user.target
