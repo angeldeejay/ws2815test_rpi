@@ -49,6 +49,7 @@ def shutdown():
             if controller is None:
                 wait_host(controller_host)
                 controller = WifiLedShopLight(controller_host)
+                controller.sync_status()
 
             controller.turn_off()
             controller.close()
