@@ -48,8 +48,8 @@ def shutdown():
         if controller is None:
             print(__name__, f'Detecting controller in {controller_host}...', sep=' => ')
             wait_host(controller_host)
-            print(__name__, 'Controller detected!',
-            controller=WifiLedShopLight(controller_host)
+            print(__name__, f'Controller detected!', sep=' => ')
+            controller = WifiLedShopLight(controller_host)
             controller.sync_status()
 
         controller.turn_off()
@@ -72,8 +72,8 @@ if __name__ == '__main__':
             shutdown()
         else:
             while True:
-                preset=None
-                speed=None
+                preset = None
+                speed = None
 
                 if sonoff.connected:
                     if scanner.is_alive(main_host):
@@ -83,7 +83,7 @@ if __name__ == '__main__':
                                     controller.close()
                                 except:
                                     pass
-                            controller=None
+                            controller = None
                             sonoff.turn_on()
 
                         if controller is None:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                             wait_host(controller_host)
                             print(__name__, 'Controller detected!',
                                   sep=' => ')
-                            controller=WifiLedShopLight(controller_host)
+                            controller = WifiLedShopLight(controller_host)
                             controller.sync_state()
                             controller.set_segments(1)
                             controller.set_lights_per_segment(144)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                             controller.close()
                         except:
                             pass
-                        controller=None
+                        controller = None
 
                 time.sleep(1)
     except KeyboardInterrupt:
