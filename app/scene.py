@@ -43,7 +43,7 @@ def shutdown():
     global scanner
     global sonoff
     print(__name__, '\nExiting...', sep=' => ')
-    if sonoff is not None and sonoff.connected:
+    if sonoff.connected:
         if controller is None:
             print(
                 __name__, f'Detecting controller in {controller_host}...', sep=' => ')
@@ -63,6 +63,8 @@ def shutdown():
             while sonoff.on:
                 sonoff.turn_off()
                 time.sleep(1)
+    
+    time.sleep(1)
     print(__name__, sonoff, sep=' => ')
     print(__name__, controller, sep=' => ')
     scanner.stop()
