@@ -258,7 +258,7 @@ class WifiLedShopLight:
                 # self.__log('Error syncing state: %s' % str(e))
                 pass
             time.sleep(1)
-        self.__log('State synced: %s' % str(self.state))
+        # self.__log('State synced: %s' % str(self.state))
 
     def __repr__(self):
         return f'{self.__class__.__name__}{vars(self)}'
