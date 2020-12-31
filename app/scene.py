@@ -61,10 +61,11 @@ def shutdown():
                     controller = WifiLedShopLight(controller_host)
                     controller.sync_state()
 
-            try:
-                controller.turn_off()
-            except:
-                pass
+            if controller.state.is_on:
+                try:
+                    controller.turn_off()
+                except:
+                    pass
 
             while sonoff.on:
                 sonoff.turn_off()
