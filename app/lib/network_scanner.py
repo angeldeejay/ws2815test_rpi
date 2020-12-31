@@ -102,16 +102,17 @@ class NetworkScanner:
         self.__in_queue.join()
 
         while True:
+            self.__log('queue: %d' % self.__out_queue.qsize())
             if not self.__running:
                 break
-            self.__log('queue: %d' % self.__out_queue.qsize())
             try:
                 (ip, ip_status) = self.__out_queue.get_nowait()
                 self.status[ip] = ip_status
-                self.__in_queue.put((ip, ip_status))
+                # self.__in_queue.put((ip, ip_status))
             except queue.Empty:
-                pass
+                break
             time.sleep(1)
+        # self.__in_queue.put((ip, ip_status))
 
     def __init_status(self):
         for ip in [f'{self.prefix}.{str(i)}' for i in [13, 203, 151, 20]]:
