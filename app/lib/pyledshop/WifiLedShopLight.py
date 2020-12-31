@@ -55,7 +55,8 @@ class WifiLedShopLight:
                 self.sock.settimeout(self.timeout)
                 self.sock.connect((self.ip, self.port))
                 self.connected = True
-                break
+                self.__log(f'Controller found: {str(self)}')
+                return
             except:
                 pass
             finally:
@@ -63,7 +64,6 @@ class WifiLedShopLight:
                 self.sock = None
                 pass
             time.sleep(1)
-        self.__log(f'Controller found: {str(self)}')
 
     def close(self):
         """
