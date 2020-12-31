@@ -187,4 +187,4 @@ class NetworkScanner:
     def __log(self, a):
         print(self.__class__.__name__, a, sep=' => ', flush=True)
 
-scanner = NetworkScanner()
+# scanner = NetworkScanner()
