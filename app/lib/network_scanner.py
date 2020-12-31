@@ -72,7 +72,7 @@ class NetworkScanner:
         self.start()
 
     def __repr__(self):
-        return f'@{self.__class__.__name__}{vars(self)}'
+        return f'@{self.__class__.__name__}'
 
     def __thread_pinger(self, i):
         """Pings hosts in queue"""
@@ -129,13 +129,13 @@ class NetworkScanner:
             self.state[ip] = {'last_ping': False, 'up': False}
 
     def __init_workers(self):
+        main_thread = Thread(target=self.__process, args=[])
+        main_thread.setDaemon(True)
+        self.__workers.append(main_thread)
         for i in range(self.__num_threads):
             worker = Thread(target=self.__thread_pinger, args=[i])
-            # worker.setDaemon(True)
+            worker.setDaemon(True)
             self.__workers.append(worker)
-        main_thread = Thread(target=self.__process, args=[])
-        # main_thread.setDaemon(True)
-        self.__workers.append(main_thread)
 
     def __start_workers(self):
         self.__log("Starting %d workers" % len(self.__workers))
