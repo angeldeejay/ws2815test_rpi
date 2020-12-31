@@ -65,8 +65,8 @@ class NetworkScanner:
         self.timeout = timeout
         self.__running = False
         self.__workers = []
-        self.__in_queue = queue.Queue()
-        self.__out_queue = queue.Queue()
+        self.__in_queue = queue.Queue(20)
+        self.__out_queue = queue.Queue(20)
         self.state = {}
         self.start()
 
