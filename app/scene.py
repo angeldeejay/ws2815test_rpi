@@ -53,34 +53,35 @@ def shutdown():
     while True:
         if sonoff.connected:
             break
-        if attempts < 5:
+        if attempts < 10:
             attempts += 1
             time.sleep(1)        
 
-    if sonoff.connected and sonoff.on:
-        if controller is None:
-            print(
-                __name__, f'Detecting controller in {controller_host}...', sep=' => ')
-            if wait_host(controller_host):
-                print(__name__, f'Controller detected!', sep=' => ')
-                controller = WifiLedShopLight(controller_host)
-                controller.sync_state()
+    if sonoff.connected:
+        if sonoff.on:
+            if controller is None:
+                print(
+                    __name__, f'Detecting controller in {controller_host}...', sep=' => ')
+                if wait_host(controller_host):
+                    print(__name__, f'Controller detected!', sep=' => ')
+                    controller = WifiLedShopLight(controller_host)
+                    controller.sync_state()
 
-        if controller.state.is_on:
-            try:
-                controller.set_custom(1)
-                controller.turn_off()
-            except:
-                pass
+            if controller.state.is_on:
+                try:
+                    controller.set_custom(1)
+                    controller.turn_off()
+                except:
+                    pass
 
-        attempts = 0
-        while True:
-            if not sonoff.on:
-                break
-            sonoff.turn_off()
-            if attempts < 5:
-                attempts += 1
-                time.sleep(1)
+            attempts = 0
+            while True:
+                if not sonoff.on:
+                    break
+                sonoff.turn_off()
+                if attempts < 5:
+                    attempts += 1
+                    time.sleep(1)
 
     scanner.stop()
     time.sleep(1)
