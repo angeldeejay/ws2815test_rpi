@@ -39,9 +39,6 @@ controller = None
 
 
 def shutdown():
-    global controller
-    global scanner
-    global sonoff
     print(__name__, '\nExiting...', sep=' => ')
     if sonoff.connected:
         if controller is None:
