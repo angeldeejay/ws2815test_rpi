@@ -98,7 +98,9 @@ class NetworkScanner:
 
     def __process(self):
         self.__running = True
-        [self.__in_queue.put(ip_status) for ip_status in self.status.items()]
+        for (ip, ip_status) in self.status.items():
+            self.__log("Queueing " + str((ip_status)))
+            self.__in_queue.put(ip_status)
         self.__in_queue.join()
 
         while True:
