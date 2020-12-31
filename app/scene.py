@@ -1,16 +1,22 @@
 import time
+from lib.utils import evaluate_day_night
+from lib.pyledshop import WifiLedShopLight
 from lib.devices import Sonoff
 from lib.network_scanner import NetworkScanner
+from sys import argv
 
 scanner = NetworkScanner()
 
 
 def wait_host(ip):
     global scanner
-    while True:
+    attempts = 0
+    while attempts < 10:
         if scanner.is_alive(ip):
-            break
+            return True
+        attempts += 1
         time.sleep(1)
+    return False
 
 
 main_host = "192.168.1.13"
@@ -43,14 +49,16 @@ def shutdown():
     global scanner
     global sonoff
     print(__name__, '\nExiting...', sep=' => ')
+    while not sonoff.connected:
+        time.sleep(1)
     if sonoff.connected:
         if controller is None:
             print(
                 __name__, f'Detecting controller in {controller_host}...', sep=' => ')
-            wait_host(controller_host)
-            print(__name__, f'Controller detected!', sep=' => ')
-            controller = WifiLedShopLight(controller_host)
-            controller.sync_state()
+            if wait_host(controller_host):
+                print(__name__, f'Controller detected!', sep=' => ')
+                controller = WifiLedShopLight(controller_host)
+                controller.sync_state()
 
         try:
             controller.turn_off()
@@ -62,77 +70,70 @@ def shutdown():
             while sonoff.on:
                 sonoff.turn_off()
                 time.sleep(1)
-    
-    time.sleep(1)
+
     print(__name__, sonoff, sep=' => ')
     print(__name__, controller, sep=' => ')
     scanner.stop()
 
 
-if __name__ == '__main__':
-    import time
-    from lib.utils import evaluate_day_night
-    from lib.pyledshop import WifiLedShopLight
-    from sys import argv
+if len(argv) > 1 and argv[1] == '--off':
+    shutdown()
+else:
+    try:
+        while True:
+            preset = None
+            speed = None
 
-    if len(argv) > 1 and argv[1] == '--off':
-        shutdown()
-    else:
-        try:
-            while True:
-                preset = None
-                speed = None
-
-                if sonoff.connected:
-                    if scanner.is_alive(main_host):
-                        if not sonoff.on:
-                            if controller is not None:
-                                try:
-                                    controller.close()
-                                except:
-                                    pass
-                            controller = None
-                            sonoff.turn_on()
-
-                        if controller is None:
-                            print(__name__, f'Detecting controller in {controller_host}...',
-                                  sep=' => ')
-                            wait_host(controller_host)
-                            print(__name__, 'Controller detected!',
-                                  sep=' => ')
-                            controller = WifiLedShopLight(controller_host)
-                            controller.sync_state()
-                            controller.set_segments(1)
-                            controller.set_lights_per_segment(144)
-
-                        if evaluate_day_night(start_at, end_at, date_fmt, time_fmt):
-                            if controller.state.mode != 0:
-                                print(__name__, 'Activating night mode!',
-                                      sep=' => ')
-                                controller.set_preset(0)
-                        else:
-                            if controller.state.mode != 219:
-                                print(__name__, 'Activating day mode!',
-                                      sep=' => ')
-                                controller.set_custom(1)
-
-                        controller.turn_on()
-
-                    else:
-                        while sonoff.on:
-                            sonoff.turn_off()
-                            time.sleep(1)
-                else:
-                    if controller is not None:
-                        try:
-                            controller.close()
-                        except:
-                            pass
+            if sonoff.connected:
+                if scanner.is_alive(main_host):
+                    if not sonoff.on:
+                        if controller is not None:
+                            try:
+                                controller.close()
+                            except:
+                                pass
                         controller = None
+                        sonoff.turn_on()
 
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            shutdown()
-            pass
+                    if controller is None:
+                        print(__name__, f'Detecting controller in {controller_host}...',
+                              sep=' => ')
+                        wait_host(controller_host)
+                        print(__name__, 'Controller detected!',
+                              sep=' => ')
+                        controller = WifiLedShopLight(controller_host)
+                        controller.sync_state()
+                        controller.set_segments(1)
+                        controller.set_lights_per_segment(144)
+
+                    if evaluate_day_night(start_at, end_at, date_fmt, time_fmt):
+                        if controller.state.mode != 0:
+                            print(__name__, 'Activating night mode!',
+                                  sep=' => ')
+                            controller.set_preset(0)
+                    else:
+                        if controller.state.mode != 219:
+                            print(__name__, 'Activating day mode!',
+                                  sep=' => ')
+                            controller.set_custom(1)
+
+                    controller.turn_on()
+
+                else:
+                    while sonoff.on:
+                        sonoff.turn_off()
+                        time.sleep(1)
+            else:
+                if controller is not None:
+                    try:
+                        controller.close()
+                    except:
+                        pass
+                    controller = None
+
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        shutdown()
+        pass
