@@ -122,7 +122,7 @@ class NetworkScanner:
                 except Exception as e:
                     print(e)
                     pass
-            time.sleep(1)
+            time.sleep(0.1)
         print("Done")
 
     def __init_status(self):
