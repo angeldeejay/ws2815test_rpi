@@ -127,6 +127,7 @@ class NetworkScanner:
         self.__workers.append(main_thread)
 
     def __start_workers(self):
+        self.__log("Starting %d workers" % len(workers))
         for worker in self.__workers:
             worker.start()
 
@@ -138,8 +139,8 @@ class NetworkScanner:
             with q.mutex:
                 q.queue.clear()
 
+        self.__log("Terminating %d workers" % len(workers))
         for worker in self.__workers:
-            self.__log("Terminating worker %s" % str(worker))
             if worker.is_alive():
                 worker.terminate()
                 worker.join(0)
