@@ -60,7 +60,7 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=5):
+    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=4):
         self.prefix = prefix
         self.timeout = timeout
         self.__num_threads = num_threads
@@ -94,7 +94,6 @@ class NetworkScanner:
                 ip_status['last_ping'] = ping_result
             self.__out_queue.put((ip, ip_status))
             self.__in_queue.task_done()
-            self.__in_queue.put((ip, ip_status))
             time.sleep(self.timeout)
 
     def __process(self):
@@ -109,6 +108,7 @@ class NetworkScanner:
             try:
                 (ip, ip_status) = self.__out_queue.get_nowait()
                 self.status[ip] = ip_status
+                self.__in_queue.put((ip, ip_status))
             except queue.Empty:
                 pass
             time.sleep(1)
