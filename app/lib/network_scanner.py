@@ -77,6 +77,7 @@ class NetworkScanner:
         """Pings hosts in queue"""
         while True:
             if not self.__running:
+                time.sleep(1)
                 continue
             (ip, ip_status) = self.__in_queue.get()
             try:
