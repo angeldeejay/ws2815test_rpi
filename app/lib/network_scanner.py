@@ -112,10 +112,13 @@ class NetworkScanner:
             if not self.__running:
                 break
             for i in range(self.__out_queue.qsize()):
+                if not self.__running:
+                    break
                 try:
                     (ip, ip_status) = self.__out_queue.get()
                     self.state[ip] = ip_status
-                    self.__in_queue.put((ip, ip_status))
+                    if self.__running:
+                        self.__in_queue.put((ip, ip_status))
                     time.sleep(1)
                 except:
                     pass
