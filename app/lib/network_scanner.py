@@ -60,7 +60,7 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=30):
+    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=4):
         self.prefix = prefix
         self.timeout = timeout
         self.__num_threads = num_threads
@@ -114,7 +114,7 @@ class NetworkScanner:
             time.sleep(1)
 
     def __init_status(self):
-        for ip in [f'{self.prefix}.{str(i)}' for i in range(1, 255)]:
+        for ip in [f'{self.prefix}.{str(i)}' for i in [13, 203, 151, 20]]:
             self.status[ip] = {'last_ping': False, 'up': False}
 
     def __init_workers(self):
