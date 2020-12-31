@@ -95,10 +95,10 @@ class NetworkScanner:
                     else:
                         ip_status['up'] = ip_status['last_ping']
                     ip_status['last_ping'] = ping_result
+                self.__out_queue.put((ip, ip_status))
+                self.__in_queue.task_done()
             except:
                 pass
-            self.__out_queue.put((ip, ip_status))
-            self.__in_queue.task_done()
             time.sleep(0.1)
 
     def __process(self):
