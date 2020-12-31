@@ -78,22 +78,26 @@ class NetworkScanner:
         """Pings hosts in queue"""
         while True:
             (ip, ip_status) = self.__in_queue.get()
-            args = ['/bin/ping', '-c', '1', '-W',
-                    str(self.timeout), ip]
-            p_ping = call_process(args, shell=False, stdout=PIPE)
-            ping_result = (p_ping.wait() == 0)
-            if ping_result:
-                ip_status['last_ping'] = ping_result
-                ip_status['up'] = ping_result
-                # self.__log(str(p_ping.communicate()))
-            else:
-                if not ip_status['last_ping']:
+            try:
+                args = ['/bin/ping', '-c', '1', '-W',
+                        str(self.timeout), ip]
+                p_ping = call_process(args, shell=False, stdout=PIPE)
+                ping_result = (p_ping.wait() == 0)
+                if ping_result:
+                    ip_status['last_ping'] = ping_result
                     ip_status['up'] = ping_result
+                    # self.__log(str(p_ping.communicate()))
                 else:
-                    ip_status['up'] = ip_status['last_ping']
-                ip_status['last_ping'] = ping_result
+                    if not ip_status['last_ping']:
+                        ip_status['up'] = ping_result
+                    else:
+                        ip_status['up'] = ip_status['last_ping']
+                    ip_status['last_ping'] = ping_result
+            except:
+                pass
             self.__out_queue.put((ip, ip_status))
             self.__in_queue.task_done()
+            self.__in_queue.put((ip, ip_status))
             time.sleep(self.timeout)
 
     def __process(self):
@@ -104,13 +108,12 @@ class NetworkScanner:
         self.__in_queue.join()
 
         while True:
-            self.__log('queue: %d' % self.__out_queue.qsize())
             if not self.__running:
                 break
+            self.__log('queue size: %d' % self.__out_queue.qsize())
             try:
                 (ip, ip_status) = self.__out_queue.get_nowait()
                 self.status[ip] = ip_status
-                # self.__in_queue.put((ip, ip_status))
             except queue.Empty:
                 pass
             time.sleep(1)
