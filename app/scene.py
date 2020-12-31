@@ -52,20 +52,6 @@ def shutdown():
     while not sonoff.connected:
         time.sleep(1)
     if sonoff.connected:
-        if controller is None:
-            print(
-                __name__, f'Detecting controller in {controller_host}...', sep=' => ')
-            if wait_host(controller_host):
-                print(__name__, f'Controller detected!', sep=' => ')
-                controller = WifiLedShopLight(controller_host)
-                controller.sync_state()
-
-        try:
-            controller.turn_off()
-            controller.close()
-        except:
-            pass
-
         if sonoff.on:
             while sonoff.on:
                 sonoff.turn_off()
