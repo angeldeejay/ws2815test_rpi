@@ -78,7 +78,7 @@ class NetworkScanner:
         """Pings hosts in queue"""
         while True:
             if not self.__running:
-                break
+                return
             try:
                 (ip, ip_status) = self.__in_queue.get_nowait()
                 args = ['/bin/ping', '-c', '1', '-W',
@@ -108,21 +108,19 @@ class NetworkScanner:
 
         while True:
             if not self.__running:
-                break
+                return
             for i in range(self.__out_queue.qsize()):
                 if not self.__running:
-                    break
+                    return
                 try:
                     (ip, ip_status) = self.__out_queue.get()
                     self.state[ip] = ip_status
                     if self.__running:
-                        time.sleep(0 if ip_status['up'] else 0.5)
                         self.__in_queue.put((ip, ip_status))
                 except Exception as e:
                     print(e)
                     pass
             time.sleep(0.1)
-        print("Done")
 
     def __init_status(self):
         for ip in [f'{self.prefix}.{str(i)}' for i in range(1, 255)]:
