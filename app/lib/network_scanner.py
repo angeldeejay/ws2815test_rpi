@@ -63,7 +63,6 @@ class NetworkScanner:
     def __init__(self, prefix='192.168.1', timeout=10):
         self.prefix = prefix
         self.timeout = timeout
-        self.__num_threads = 30
         self.__running = False
         self.__workers = []
         self.__in_queue = queue.Queue()
@@ -130,7 +129,7 @@ class NetworkScanner:
         main_thread = Thread(target=self.__process, args=[])
         main_thread.setDaemon(True)
         self.__workers.append(main_thread)
-        for i in range(self.__num_threads):
+        for i in range(len(self.state)):
             worker = Thread(target=self.__thread_pinger, args=[i])
             worker.setDaemon(True)
             self.__workers.append(worker)
