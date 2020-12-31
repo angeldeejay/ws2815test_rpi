@@ -55,7 +55,7 @@ def shutdown():
             break
         if attempts < 10:
             attempts += 1
-            time.sleep(1)        
+            time.sleep(1)
 
     if sonoff.connected:
         if sonoff.on:
@@ -130,7 +130,7 @@ else:
                 else:
                     while sonoff.on:
                         sonoff.turn_off()
-                        time.sleep(1)
+                        time.sleep(0.5)
             else:
                 if controller is not None:
                     try:
@@ -139,7 +139,7 @@ else:
                         pass
                     controller = None
 
-            time.sleep(1)
+            time.sleep(0.5)
     except KeyboardInterrupt:
         pass
     finally:
