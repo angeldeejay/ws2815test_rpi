@@ -214,16 +214,16 @@ class WifiLedShopLight:
         while True:
             try:
                 self.sock.sendall(raw_data)
-                break
+                return
             except (socket.timeout, BrokenPipeError) as e:
-                # self.__log('Error sending data: %s' % str(e))
+                self.__log('Error sending data: %s' % str(e))
                 if (attempts < self.retries):
                     self.reconnect()
                     attempts += 1
                 else:
                     break
             except Exception as e:
-                # self.__log('Error sending data: %s' % str(e))
+                self.__log('Error sending data: %s' % str(e))
                 pass
             time.sleep(1)
 
