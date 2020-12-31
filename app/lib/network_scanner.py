@@ -39,7 +39,8 @@ class Thread(threading.Thread):
             return self._thread_id
 
         # no, look for it in the _active dict
-        for thread_id, thread_object in threading._active.items():
+        active_threads = threading._active.copy()
+        for thread_id, thread_object in active_threads.items():
             if thread_object is self:
                 self._thread_id = thread_id
                 return thread_id
