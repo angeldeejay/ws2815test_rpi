@@ -167,4 +167,4 @@ class NetworkScanner:
         return False
 
     def __log(self, a):
-        print(self.__class__.__name__, a, flush=True, sep=' => ')
+        print(self.__class__.__name__, a, sep=' => ')

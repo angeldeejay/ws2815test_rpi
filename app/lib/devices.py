@@ -19,7 +19,7 @@ class Sonoff:
         self.__connect()
 
     def __log(self, a):
-        print(self.__class__.__name__, a, flush=True, sep=' => ')
+        print(self.__class__.__name__, a, sep=' => ')
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:

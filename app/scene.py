@@ -26,13 +26,13 @@ date_fmt = '%Y/%m/%d '
 time_fmt = '%H:%M:%S'
 
 print(
-    __name__, f'Detecting Broker in {sonoff_broker}...', sep=' => ', flush=True)
+    __name__, f'Detecting Broker in {sonoff_broker}...', sep=' => ')
 wait_host(sonoff_broker)
-print(__name__, f'Broker detected!', sep=' => ', flush=True)
+print(__name__, f'Broker detected!', sep=' => ')
 print(
-    __name__, f'Detecting Sonoff in {sonoff_host}...', sep=' => ', flush=True)
+    __name__, f'Detecting Sonoff in {sonoff_host}...', sep=' => ')
 wait_host(sonoff_host)
-print(__name__, f'Sonoff detected!', sep=' => ', flush=True)
+print(__name__, f'Sonoff detected!', sep=' => ')
 
 sonoff = Sonoff(broker=sonoff_broker, device="desktop")
 controller = None
@@ -42,7 +42,7 @@ def shutdown():
     global controller
     global scanner
     global sonoff
-    print(__name__, '\nExiting...', sep=' => ', flush=True)
+    print(__name__, '\nExiting...', sep=' => ')
     scanner.stop()
     if sonoff is not None and sonoff.connected:
         if sonoff.on:
@@ -86,10 +86,10 @@ if __name__ == '__main__':
 
                         if controller is None:
                             print(__name__, f'Detecting controller in {controller_host}...',
-                                  sep=' => ', flush=True)
+                                  sep=' => ')
                             wait_host(controller_host)
                             print(__name__, 'Controller detected!',
-                                  sep=' => ', flush=True)
+                                  sep=' => ')
                             controller = WifiLedShopLight(controller_host)
                             controller.sync_state()
                             controller.set_segments(1)
@@ -98,12 +98,12 @@ if __name__ == '__main__':
                         if evaluate_day_night(start_at, end_at, date_fmt, time_fmt):
                             if controller.state.mode != 0:
                                 print(__name__, 'Activating night mode!',
-                                      sep=' => ', flush=True)
+                                      sep=' => ')
                                 controller.set_preset(0)
                         else:
                             if controller.state.mode != 219:
                                 print(__name__, 'Activating day mode!',
-                                      sep=' => ', flush=True)
+                                      sep=' => ')
                                 controller.set_custom(1)
 
                         controller.turn_on()
