@@ -39,9 +39,8 @@ class Thread(threading.Thread):
             return self._thread_id
 
         # no, look for it in the _active dict
-        active_threads = list(self.active.keys())
-        for thread_id in active_threads:
-            if thread_id is self.active:
+        for thread_id, thread_object in threading._active.items():
+            if thread_object is self:
                 self._thread_id = thread_id
                 return thread_id
 
@@ -77,28 +76,27 @@ class NetworkScanner:
     def __thread_pinger(self, i):
         """Pings hosts in queue"""
         while True:
-            if not self.__running:
-                return
-            try:
-                (ip, ip_status) = self.__in_queue.get_nowait()
-                args = ['/bin/ping', '-c', '1', '-W',
-                        str(self.timeout), ip]
-                p_ping = call_process(args, shell=False, stdout=PIPE)
-                ping_result = (p_ping.wait() == 0)
-                if ping_result:
-                    ip_status['last_ping'] = ping_result
-                    ip_status['up'] = ping_result
-                    # self.__log(str(p_ping.communicate()))
-                else:
-                    if not ip_status['last_ping']:
+            if self.__running:
+                try:
+                    (ip, ip_status) = self.__in_queue.get_nowait()
+                    args = ['/bin/ping', '-c', '1', '-W',
+                            str(self.timeout), ip]
+                    p_ping = call_process(args, shell=False, stdout=PIPE)
+                    ping_result = (p_ping.wait() == 0)
+                    if ping_result:
+                        ip_status['last_ping'] = ping_result
                         ip_status['up'] = ping_result
+                        # self.__log(str(p_ping.communicate()))
                     else:
-                        ip_status['up'] = ip_status['last_ping']
-                    ip_status['last_ping'] = ping_result
-                self.__out_queue.put((ip, ip_status))
-                self.__in_queue.task_done()
-            except:
-                pass
+                        if not ip_status['last_ping']:
+                            ip_status['up'] = ping_result
+                        else:
+                            ip_status['up'] = ip_status['last_ping']
+                        ip_status['last_ping'] = ping_result
+                    self.__out_queue.put((ip, ip_status))
+                    self.__in_queue.task_done()
+                except:
+                    pass
             time.sleep(0.1)
 
     def __process(self):
