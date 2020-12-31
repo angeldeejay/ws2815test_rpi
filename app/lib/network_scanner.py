@@ -126,7 +126,7 @@ class NetworkScanner:
             self.state[ip] = {'last_ping': False, 'up': False}
 
     def __init_workers(self):
-        for i in range(len(self.state)):
+        for i in range(self.__num_threads):
             worker = Thread(target=self.__thread_pinger, args=[i])
             # worker.setDaemon(True)
             self.__workers.append(worker)
@@ -136,7 +136,7 @@ class NetworkScanner:
 
     def __start_workers(self):
         self.__log("Starting workers")
-        for worker in range(self.__num_threads):
+        for worker in self.__workers:
             worker.start()
             # self.__log("%s started" % str(worker))
 
