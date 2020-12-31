@@ -48,11 +48,11 @@ class WifiLedShopLight:
         if self.sock:
             self.close()
 
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(self.timeout)
         self.__log('Reaching controller...')
         while True:
             try:
-                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.sock.settimeout(self.timeout)
                 self.sock.connect((self.ip, self.port))
                 self.connected = True
                 self.__log(f'Controller found: {str(self)}')
