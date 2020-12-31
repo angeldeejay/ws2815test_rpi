@@ -119,7 +119,6 @@ class NetworkScanner:
                     self.state[ip] = ip_status
                     if self.__running:
                         self.__in_queue.put((ip, ip_status))
-                    time.sleep(1)
                 except Exception as e:
                     print(e)
                     pass
