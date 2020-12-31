@@ -63,7 +63,7 @@ class NetworkScanner:
     def __init__(self, prefix='192.168.1', timeout=10):
         self.prefix = prefix
         self.timeout = timeout
-        self.__num_threads = 20
+        self.__num_threads = 30
         self.__running = False
         self.__workers = []
         self.__in_queue = queue.Queue(self.__num_threads)
@@ -79,7 +79,7 @@ class NetworkScanner:
         while True:
             if not self.__running:
                 time.sleep(1)
-                continue
+                break
             (ip, ip_status) = self.__in_queue.get()
             try:
                 args = ['/bin/ping', '-c', '1', '-W',
