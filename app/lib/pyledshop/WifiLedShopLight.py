@@ -216,14 +216,14 @@ class WifiLedShopLight:
                 self.sock.sendall(raw_data)
                 break
             except (socket.timeout, BrokenPipeError) as e:
-                # self.__log('Error sending data: %s' % str(e))
+                self.__log('Error sending data: %s' % str(e))
                 if (attempts < self.retries):
                     self.reconnect()
                     attempts += 1
                 else:
                     break
             except Exception as e:
-                # self.__log('Error sending data: %s' % str(e))
+                self.__log('Error sending data: %s' % str(e))
                 pass
             time.sleep(1)
 
@@ -234,7 +234,7 @@ class WifiLedShopLight:
         attempts = 0
         while True:
             try:
-                # self.__log('Syncing state..')
+                self.__log('Syncing state..')
                 # Send the request for sync data
                 self.send_command(Command.SYNC)
 
@@ -242,10 +242,10 @@ class WifiLedShopLight:
 
                 # Extract the state data
                 state = bytearray(response)
-                # self.state.update_from_sync(state)
+                self.state.update_from_sync(state)
                 break
             except SocketError as e:
-                # self.__log('Error syncing state: %s' % str(e))
+                self.__log('Error syncing state: %s' % str(e))
                 if e.errno == errno.ECONNRESET:
                     pass
                 elif attempts < self.retries:
@@ -254,7 +254,7 @@ class WifiLedShopLight:
                 else:
                     pass
             except Exception as e:
-                # self.__log('Error syncing state: %s' % str(e))
+                self.__log('Error syncing state: %s' % str(e))
                 pass
             time.sleep(1)
         # self.__log('State synced: %s' % str(self.state))
