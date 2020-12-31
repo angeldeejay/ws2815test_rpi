@@ -60,15 +60,14 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=4):
+    def __init__(self, prefix='192.168.1', timeout=10):
         self.prefix = prefix
         self.timeout = timeout
-        self.__num_threads = num_threads
         self.__running = False
         self.__workers = []
-        self.__in_queue = queue.Queue(self.__num_threads)
-        self.__out_queue = queue.Queue(self.__num_threads)
-        self.status = {}
+        self.__in_queue = queue.Queue()
+        self.__out_queue = queue.Queue()
+        self.state = {}
         self.start()
 
     def __repr__(self):
@@ -97,44 +96,45 @@ class NetworkScanner:
                 pass
             self.__out_queue.put((ip, ip_status))
             self.__in_queue.task_done()
-            self.__in_queue.put((ip, ip_status))
-            time.sleep(self.timeout)
 
     def __process(self):
         self.__running = True
-        for (ip, ip_status) in self.status.items():
-            self.__log("Queueing " + ip)
+        for (ip, ip_status) in self.state.items():
             self.__in_queue.put((ip, ip_status))
         self.__in_queue.join()
 
         while True:
             if not self.__running:
                 break
-            self.__log('queue size: %d' % self.__out_queue.qsize())
-            try:
-                (ip, ip_status) = self.__out_queue.get_nowait()
-                self.status[ip] = ip_status
-            except queue.Empty:
-                pass
+            for i in range(self.__out_queue.qsize()):
+                try:
+                    (ip, ip_status) = self.__out_queue.get()
+                    self.state[ip] = ip_status
+                    self.__in_queue.put((ip, ip_status))
+                    time.sleep(1)
+                except:
+                    pass
             time.sleep(1)
+        print("Done")
 
     def __init_status(self):
-        for ip in [f'{self.prefix}.{str(i)}' for i in [13, 203, 151, 20]]:
-            self.status[ip] = {'last_ping': False, 'up': False}
+        for ip in [f'{self.prefix}.{str(i)}' for i in range(1, 255)]:
+            self.state[ip] = {'last_ping': False, 'up': False}
 
     def __init_workers(self):
-        for i in range(self.__num_threads):
+        for i in range(len(self.state)):
             worker = Thread(target=self.__thread_pinger, args=[i])
-            worker.setDaemon(True)
+            # worker.setDaemon(True)
             self.__workers.append(worker)
-        main_thread = Thread(target=self.__process)
-        main_thread.setDaemon(True)
+        main_thread = Thread(target=self.__process, args=[])
+        # main_thread.setDaemon(True)
         self.__workers.append(main_thread)
 
     def __start_workers(self):
         self.__log("Starting %d workers" % len(self.__workers))
         for worker in self.__workers:
             worker.start()
+            # self.__log("%s started" % str(worker))
 
     def stop(self):
         self.__log("Stopping...")
@@ -150,6 +150,7 @@ class NetworkScanner:
                 worker.terminate()
                 worker.join(0)
                 worker.is_alive()
+                # self.__log("%s terminated" % str(worker))
 
         self.__workers = []
         self.__log("Stopped")
@@ -169,11 +170,13 @@ class NetworkScanner:
 
     def is_alive(self, ip):
         try:
-            is_alive = self.status[ip]['up']
+            is_alive = self.state[ip]['up']
             return is_alive
         except:
             pass
         return False
 
     def __log(self, a):
-        print(self.__class__.__name__, a, sep=' => ')
+        print(self.__class__.__name__, a, sep=' => ', flush=True)
+
+scanner = NetworkScanner()
