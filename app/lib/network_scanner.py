@@ -66,8 +66,8 @@ class NetworkScanner:
         self.__num_threads = 30
         self.__running = False
         self.__workers = []
-        self.__in_queue = queue.Queue(self.__num_threads)
-        self.__out_queue = queue.Queue(self.__num_threads)
+        self.__in_queue = queue.Queue()
+        self.__out_queue = queue.Queue()
         self.state = {}
         self.start()
 
