@@ -60,7 +60,7 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=4):
+    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=5):
         self.prefix = prefix
         self.timeout = timeout
         self.__num_threads = num_threads
