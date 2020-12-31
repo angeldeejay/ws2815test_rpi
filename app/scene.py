@@ -49,31 +49,40 @@ def shutdown():
     global scanner
     global sonoff
     print(__name__, '\nExiting...', sep=' => ')
-    while not sonoff.connected:
-        time.sleep(1)
-    if sonoff.connected:
-        if sonoff.on:
-            if controller is None:
-                print(
-                    __name__, f'Detecting controller in {controller_host}...', sep=' => ')
-                if wait_host(controller_host):
-                    print(__name__, f'Controller detected!', sep=' => ')
-                    controller = WifiLedShopLight(controller_host)
-                    controller.sync_state()
+    attempts = 0
+    while True:
+        if sonoff.connected:
+            break
+        if attempts < 5:
+            attempts += 1
+            time.sleep(1)        
 
-            if controller.state.is_on:
-                try:
-                    controller.turn_off()
-                except:
-                    pass
+    if sonoff.connected and sonoff.on:
+        if controller is None:
+            print(
+                __name__, f'Detecting controller in {controller_host}...', sep=' => ')
+            if wait_host(controller_host):
+                print(__name__, f'Controller detected!', sep=' => ')
+                controller = WifiLedShopLight(controller_host)
+                controller.sync_state()
 
-            while sonoff.on:
-                sonoff.turn_off()
+        if controller.state.is_on:
+            try:
+                controller.turn_off()
+            except:
+                pass
+
+        attempts = 0
+        while True:
+            if not sonoff.on:
+                break
+            sonoff.turn_off()
+            if attempts < 5:
+                attempts += 1
                 time.sleep(1)
 
-    print(__name__, sonoff, sep=' => ')
-    print(__name__, controller, sep=' => ')
     scanner.stop()
+    time.sleep(1)
 
 
 if len(argv) > 1 and argv[1] == '--off':
