@@ -47,7 +47,7 @@ class Thread(threading.Thread):
         raise AssertionError("could not determine the thread's id")
 
     def __repr__(self):
-        return f'@{self.__class__.__name__}<{str(self._get_my_tid())}>'
+        return f'@{self.__class__.__name__}'
 
     def raise_exc(self, exctype):
         """raises the given exception type in the context of this thread"""
