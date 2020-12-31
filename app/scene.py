@@ -50,7 +50,7 @@ def shutdown():
             wait_host(controller_host)
             print(__name__, f'Controller detected!', sep=' => ')
             controller = WifiLedShopLight(controller_host)
-            controller.sync_status()
+            controller.sync_state()
 
         controller.turn_off()
         controller.close()
