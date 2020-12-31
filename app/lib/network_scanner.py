@@ -76,6 +76,8 @@ class NetworkScanner:
     def __thread_pinger(self, i):
         """Pings hosts in queue"""
         while True:
+            if not self.__running:
+                continue
             (ip, ip_status) = self.__in_queue.get()
             try:
                 args = ['/bin/ping', '-c', '1', '-W',
