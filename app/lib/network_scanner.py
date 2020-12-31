@@ -77,6 +77,7 @@ class NetworkScanner:
     def __thread_pinger(self, i):
         """Pings hosts in queue"""
         while True:
+            print("ABC")
             if not self.__running:
                 break
             (ip, ip_status) = self.__in_queue.get()
@@ -99,6 +100,7 @@ class NetworkScanner:
                 pass
             self.__out_queue.put((ip, ip_status))
             self.__in_queue.task_done()
+            time.sleep(0.1)
 
     def __process(self):
         self.__running = True
@@ -134,7 +136,7 @@ class NetworkScanner:
         self.__workers.append(main_thread)
 
     def __start_workers(self):
-        self.__log("Starting workers")
+        self.__log("Starting %d workers" % len(self.__workers))
         for worker in self.__workers:
             worker.start()
             # self.__log("%s started" % str(worker))
