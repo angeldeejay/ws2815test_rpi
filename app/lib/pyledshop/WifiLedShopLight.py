@@ -48,7 +48,7 @@ class WifiLedShopLight:
         if self.sock:
             self.close()
 
-        # self.__log('Reaching controller...')
+        self.__log('Reaching controller...')
         while True:
             try:
                 self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
