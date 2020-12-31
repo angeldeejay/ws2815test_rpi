@@ -3,6 +3,8 @@ import time
 import socket
 import binascii
 from paho.mqtt import client as mqtt_client
+import threading
+import asyncore
 
 
 class Sonoff:
@@ -16,11 +18,14 @@ class Sonoff:
         self.client = None
         self.__connect()
 
+    def __log(self, a):
+        print(self.__class__.__name__, a, flush=True, sep=' => ')
+
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
-            print(f'Connected to {self.broker}:{self.port}', flush=True)
+            self.__log(f'Connected to {self.broker}:{self.port}')
             self.connected = True
-            print('Getting initial state...', flush=True)
+            self.__log('Getting initial state...')
             self.client.subscribe(f'stat/{self.device}/POWER')
             self.__publish(f'cmnd/{self.device}/Power')
         else:
@@ -28,11 +33,11 @@ class Sonoff:
 
     def __on_message(self, client, userdata, message):
         status = str(message.payload.decode("utf-8"))
-        # print(f'Status: {status}', flush=True)
+        # self.__log(f'Status: {status}')
         self.on = status == "ON"
 
     def __on_disconnect(self, client, userdata, rc):
-        print('Disconnected. Reconnecting...', flush=True)
+        self.__log('Disconnected. Reconnecting...')
 
     def __connect(self, on_connect_lambda=None):
         self.client = mqtt_client.Client(self.client_id)
@@ -48,8 +53,8 @@ class Sonoff:
             if result[0] == 0:
                 return True
 
-            print(
-                f"Failed to send message `{message}` to topic {topic}: {result}", flush=True)
+            self.__log(
+                f"Failed to send message `{message}` to topic {topic}: {result}")
         return False
 
     def __repr__(self):
@@ -57,12 +62,12 @@ class Sonoff:
 
     def turn_on(self):
         if not self.on:
-            print(f"Turning on {self}", flush=True)
+            self.__log(f"Turning on {self}")
             self.__publish(f'cmnd/{self.device}/Power', 1)
 
     def turn_off(self):
         if self.on:
-            print(f"Turning off {self}", flush=True)
+            self.__log(f"Turning off {self}")
             self.__publish(f'cmnd/{self.device}/Power', 0)
 
     def toggle_off_on(self):

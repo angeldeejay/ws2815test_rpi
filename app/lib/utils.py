@@ -2,7 +2,7 @@ import time
 from datetime import datetime, timedelta
 
 
-def turn_on_condition(start_at, end_at, date_fmt, time_fmt):
+def evaluate_day_night(start_at, end_at, date_fmt, time_fmt):
     now = datetime.now()
     current_start = datetime.strptime(now.strftime(
         date_fmt) + start_at, date_fmt + time_fmt)

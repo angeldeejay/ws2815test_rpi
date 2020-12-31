@@ -13,7 +13,7 @@ class WifiLedShopLight:
     A Wifi LED Shop Light
     """
 
-    def __init__(self, ip, port=8189, timeout=3, retries=20):
+    def __init__(self, ip, port=8189, timeout=3, retries=5):
         """
         Creates a new Wifi LED Shop light
 
@@ -32,6 +32,9 @@ class WifiLedShopLight:
         self.sock = None
         self.reconnect()
 
+    def __log(self, a):
+        print(self.__class__.__name__, a, flush=True, sep=' => ')
+
     def __enter__(self):
         return self
 
@@ -47,20 +50,21 @@ class WifiLedShopLight:
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(self.timeout)
-        print('Reaching controller')
+        # self.__log('Reaching controller...')
         attempts = 0
-        while not self.connected and attempts < self.retries:
+        while attempts < self.retries:
             try:
                 self.sock.connect((self.ip, self.port))
                 self.connected = True
+                break
             except:
                 pass
             finally:
                 self.connected = False
                 pass
             attempts += 1
-            time.sleep(0.5)
-        print(f'Controller found: {str(self)}')
+            time.sleep(1)
+        self.__log(f'Controller found: {str(self)}')
 
     def close(self):
         """
@@ -77,6 +81,7 @@ class WifiLedShopLight:
         g = clamp(g)
         b = clamp(b)
         self.state.color = (r, g, b)
+        self.__log('Setting color %s' % str((r, g, b)))
         self.send_command(Command.SET_COLOR, [int(r), int(g), int(b)])
 
     def set_brightness(self, brightness=0):
@@ -85,6 +90,7 @@ class WifiLedShopLight:
 
         :param brightness: An int describing the brightness (0 to 255, where 255 is the brightest)
         """
+        self.__log('Setting brightness %d' % brightness)
         brightness = clamp(brightness)
         self.state.brightness = brightness
         self.send_command(Command.SET_BRIGHTNESS, [int(brightness)])
@@ -95,6 +101,7 @@ class WifiLedShopLight:
 
         :param speed: An int describing the speed an effect will play at. (0 to 255, where 255 is the fastest)
         """
+        self.__log('Setting speed %d' % speed)
         speed = clamp(speed)
         self.state.speed = speed
         self.send_command(Command.SET_SPEED, [int(speed)])
@@ -105,9 +112,11 @@ class WifiLedShopLight:
 
         :param preset: The preset effect to use. Valid values are 0 to 255. See the MonoEffect enum, or MONO_EFFECTS and PRESET_EFFECTS for mapping.
         """
-        preset = clamp(preset)
-        self.state.mode = preset
-        self.send_command(Command.SET_PRESET, [int(preset)])
+        self.__log('Setting default preset %d' % preset)
+        preset = clamp(preset, 0, 218)
+        while self.state.mode != preset:
+            self.send_command(Command.SET_PRESET, [int(preset)])
+            self.sync_state()
 
     def set_custom(self, custom):
         """
@@ -115,22 +124,27 @@ class WifiLedShopLight:
 
         :param custom: The custom effect to use. Valid values are 1 to 12. See the CustomEffect enum.
         """
+        self.__log('Setting custom preset %d' % custom)
         custom = clamp(custom, 1, 12)
-        self.state.mode = custom
-        self.send_command(Command.SET_CUSTOM, [int(custom)])
+        while self.state.mode != (218 + custom):
+            self.send_command(Command.SET_CUSTOM, [int(custom)])
+            self.sync_state()
 
     def toggle(self):
         """
         Toggles the state of the light without checking the current state
         """
-        self.state.is_on = not self.state.is_on
-        self.send_command(Command.TOGGLE)
+        old_state = self.state.is_on
+        while self.state.is_on == old_state:
+            self.send_command(Command.TOGGLE)
+            self.sync_state()
 
     def turn_on(self):
         """
         Toggles the light on only if it is not already on
         """
         if not self.state.is_on:
+            self.__log('Turning on')
             self.toggle()
 
     def turn_off(self):
@@ -138,6 +152,7 @@ class WifiLedShopLight:
         Toggles the light off only if it is not already off
         """
         if self.state.is_on:
+            self.__log('Turning off')
             self.toggle()
 
     def set_segments(self, segments):
@@ -200,13 +215,17 @@ class WifiLedShopLight:
         while True:
             try:
                 self.sock.sendall(raw_data)
-                return
-            except (socket.timeout, BrokenPipeError):
+                break
+            except (socket.timeout, BrokenPipeError) as e:
+                # self.__log('Error sending data: %s' % str(e))
                 if (attempts < self.retries):
                     self.reconnect()
                     attempts += 1
                 else:
-                    raise
+                    break
+            except Exception as e:
+                # self.__log('Error sending data: %s' % str(e))
+                pass
             time.sleep(1)
 
     def sync_state(self):
@@ -216,6 +235,7 @@ class WifiLedShopLight:
         attempts = 0
         while True:
             try:
+                # self.__log('Syncing state..')
                 # Send the request for sync data
                 self.send_command(Command.SYNC)
 
@@ -223,17 +243,22 @@ class WifiLedShopLight:
 
                 # Extract the state data
                 state = bytearray(response)
-                self.state.update_from_sync(state)
-                return
+                # self.state.update_from_sync(state)
+                break
             except SocketError as e:
+                # self.__log('Error syncing state: %s' % str(e))
                 if e.errno == errno.ECONNRESET:
                     pass
                 elif attempts < self.retries:
                     self.reconnect()
                     attempts += 1
                 else:
-                    raise
+                    pass
+            except Exception as e:
+                # self.__log('Error syncing state: %s' % str(e))
+                pass
             time.sleep(1)
+        self.__log('State synced: %s' % str(self.state))
 
     def __repr__(self):
         return f'{self.__class__.__name__}{vars(self)}'

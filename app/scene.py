@@ -1,8 +1,22 @@
+import time
 from lib.devices import Sonoff
-from lib.pyledshop import *
+from lib.network_scanner import NetworkScanner
+
+scanner = NetworkScanner()
+
+
+def wait_host(ip):
+    global scanner
+    while True:
+        if scanner.is_alive(ip):
+            break
+        time.sleep(1)
+
 
 main_host = "192.168.1.13"
 controller_host = "192.168.1.203"
+sonoff_host = "192.168.1.151"
+sonoff_broker = "192.168.1.20"
 
 is_alive = False
 last_ping = False
@@ -11,21 +25,43 @@ end_at = '06:30:00'
 date_fmt = '%Y/%m/%d '
 time_fmt = '%H:%M:%S'
 
-desktop_lights = Sonoff(broker="192.168.1.20", device="desktop")
+print(
+    __name__, f'Detecting Broker in {sonoff_broker}...', sep=' => ', flush=True)
+wait_host(sonoff_broker)
+print(__name__, f'Broker detected!', sep=' => ', flush=True)
+print(
+    __name__, f'Detecting Sonoff in {sonoff_host}...', sep=' => ', flush=True)
+wait_host(sonoff_host)
+print(__name__, f'Sonoff detected!', sep=' => ', flush=True)
+
+sonoff = Sonoff(broker=sonoff_broker, device="desktop")
 controller = None
 
 
 def shutdown():
-    if desktop_lights.connected:
-        while desktop_lights.on:
-            desktop_lights.turn_off()
-            time.sleep(2)
+    global controller
+    global scanner
+    global sonoff
+    print(__name__, '\nExiting...', sep=' => ', flush=True)
+    scanner.stop()
+    if sonoff is not None and sonoff.connected:
+        if sonoff.on:
+            if controller is None:
+                wait_host(controller_host)
+                controller = WifiLedShopLight(controller_host)
+
+            controller.turn_off()
+            controller.close()
+
+            while sonoff.on:
+                sonoff.turn_off()
+                time.sleep(1)
 
 
 if __name__ == '__main__':
     import time
-    import pythonping
-    from lib.utils import turn_on_condition
+    from lib.utils import evaluate_day_night
+    from lib.pyledshop import WifiLedShopLight
     from sys import argv
 
     try:
@@ -33,58 +69,58 @@ if __name__ == '__main__':
             shutdown()
         else:
             while True:
-                ping_result = pythonping.ping(
-                    main_host, timeout=1.5, count=1).success()
-                if ping_result:
-                    is_alive = ping_result
-                    last_ping = ping_result
-                else:
-                    if not last_ping:
-                        is_alive = ping_result
-                    else:
-                        is_alive = last_ping
-                    last_ping = ping_result
-
-                # is_alive = turn_on_condition(start_at, end_at, date_fmt, time_fmt) and is_alive
                 preset = None
                 speed = None
-                if turn_on_condition(start_at, end_at, date_fmt, time_fmt):
-                    # Rainbow
-                    preset = 0
-                    speed = 128
-                else:
-                    # Meteor
-                    speed = 200
-                    preset = MonoEffect.METEOR
 
-                if desktop_lights.connected:
-                    if is_alive:
-                        if not desktop_lights.on:
+                if sonoff.connected:
+                    if scanner.is_alive(main_host):
+                        if not sonoff.on:
                             if controller is not None:
                                 try:
                                     controller.close()
                                 except:
                                     pass
                             controller = None
-
-                        desktop_lights.turn_on()
+                            sonoff.turn_on()
 
                         if controller is None:
+                            print(__name__, f'Detecting controller in {controller_host}...',
+                                  sep=' => ', flush=True)
+                            wait_host(controller_host)
+                            print(__name__, 'Controller detected!',
+                                  sep=' => ', flush=True)
                             controller = WifiLedShopLight(controller_host)
                             controller.sync_state()
-                        controller.set_preset(preset)
-                        controller.set_speed(speed)
+                            controller.set_segments(1)
+                            controller.set_lights_per_segment(144)
+
+                        if evaluate_day_night(start_at, end_at, date_fmt, time_fmt):
+                            if controller.state.mode != 0:
+                                print(__name__, 'Activating night mode!',
+                                      sep=' => ', flush=True)
+                                controller.set_preset(0)
+                        else:
+                            if controller.state.mode != 219:
+                                print(__name__, 'Activating day mode!',
+                                      sep=' => ', flush=True)
+                                controller.set_custom(1)
+
+                        controller.turn_on()
+
                     else:
+                        while sonoff.on:
+                            sonoff.turn_off()
+                            time.sleep(1)
+                else:
+                    if controller is not None:
                         try:
                             controller.close()
                         except:
                             pass
                         controller = None
-                        desktop_lights.turn_off()
 
-                time.sleep(4)
+                time.sleep(1)
     except KeyboardInterrupt:
-        print("\nExiting...")
         pass
     finally:
         shutdown()
