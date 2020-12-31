@@ -43,10 +43,10 @@ def shutdown():
     global scanner
     global sonoff
     print(__name__, '\nExiting...', sep=' => ')
-    scanner.stop()
     if sonoff is not None and sonoff.connected:
         if controller is None:
-            print(__name__, f'Detecting controller in {controller_host}...', sep=' => ')
+            print(
+                __name__, f'Detecting controller in {controller_host}...', sep=' => ')
             wait_host(controller_host)
             print(__name__, f'Controller detected!', sep=' => ')
             controller = WifiLedShopLight(controller_host)
@@ -59,6 +59,7 @@ def shutdown():
             while sonoff.on:
                 sonoff.turn_off()
                 time.sleep(1)
+    scanner.stop()
 
 
 if __name__ == '__main__':
