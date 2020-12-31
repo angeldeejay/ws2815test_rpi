@@ -60,14 +60,14 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=1):
+    def __init__(self, prefix='192.168.1', timeout=0.5, num_threads=4):
         self.prefix = prefix
         self.timeout = timeout
         self.__num_threads = num_threads
         self.__running = False
         self.__workers = []
-        self.__in_queue = queue.Queue()
-        self.__out_queue = queue.Queue()
+        self.__in_queue = queue.Queue(self.__num_threads)
+        self.__out_queue = queue.Queue(self.__num_threads)
         self.status = {}
         self.start()
 
