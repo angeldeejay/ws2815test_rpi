@@ -61,7 +61,6 @@ class WifiLedShopLight:
                 pass
             finally:
                 self.connected = False
-                self.sock = None
                 pass
             time.sleep(1)
 
