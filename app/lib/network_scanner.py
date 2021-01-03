@@ -61,7 +61,7 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=1):
+    def __init__(self, prefix='192.168.1', timeout=0.5):
         self.prefix = prefix
         self.timeout = timeout
         self.__running = False
@@ -77,31 +77,40 @@ class NetworkScanner:
     def __thread_pinger(self, i):
         """Pings hosts in queue"""
         while True:
-            if self.__running:
+            if not self.__running:
+                break
+            try:
+                (ip, ip_status) = self.__in_queue.get()
+
+                ping_result = False
                 try:
-                    (ip, ip_status) = self.__in_queue.get_nowait()
                     args = ['/bin/ping', '-c', '1', '-W',
                             str(self.timeout), ip]
                     p_ping = call_process(args, shell=False, stdout=PIPE)
                     ping_result = (p_ping.wait() == 0)
-                    if ping_result:
-                        ip_status['attempts'] = 0
-                        ip_status['up'] = ping_result
-                        # self.__log(str(p_ping.communicate()))
-                    else:
-                        if ip_status['up']:
-                            if ip_status['attempts'] < 30:
-                                ip_status['attempts'] += 1
-                            else:
-                                ip_status['attempts'] = 0
-                                ip_status['up'] = ping_result
+                except:
+                    pass
+
+                if ping_result:
+                    ip_status['attempts'] = 0
+                    ip_status['up'] = ping_result
+                    # self.__log(str(p_ping.communicate()))
+                else:
+                    if ip_status['up']:
+                        if ip_status['attempts'] < 10:
+                            ip_status['attempts'] += 1
                         else:
                             ip_status['attempts'] = 0
                             ip_status['up'] = ping_result
-                    self.__out_queue.put((ip, ip_status))
-                    self.__in_queue.task_done()
-                except:
-                    pass
+                    else:
+                        ip_status['attempts'] = 0
+                        ip_status['up'] = ping_result
+                self.state[ip] = ip_status
+                self.__in_queue.put((ip, ip_status))
+                self.__in_queue.task_done()
+            except Exception as e:
+                self.__log(e)
+                pass
             time.sleep(0.1)
 
     def __process(self):
@@ -111,21 +120,11 @@ class NetworkScanner:
 
         while True:
             if not self.__running:
-                return
-            for i in range(self.__out_queue.qsize()):
-                if not self.__running:
-                    return
-                try:
-                    (ip, ip_status) = self.__out_queue.get()
-                    self.state[ip] = ip_status
-                    if self.__running:
-                        self.__in_queue.put((ip, ip_status))
-                except:
-                    pass
+                break
             time.sleep(0.1)
 
     def __init_status(self):
-        for ip in [f'{self.prefix}.{str(i)}' for i in range(1, 255)]:
+        for ip in [f'{self.prefix}.{str(i)}' for i in [13, 20, 151, 203]]:
             self.state[ip] = {'up': False, 'attempts': 0}
 
     def __init_workers(self):
@@ -180,9 +179,16 @@ class NetworkScanner:
         try:
             is_alive = self.state[ip]['up']
             return is_alive
-        except:
+        except Exception as e:
+            self.__log(e)
             pass
         return False
 
     def __log(self, a):
         print(self.__class__.__name__, a, sep=' => ', flush=True)
+
+
+scanner = NetworkScanner()
+while True:
+    print(scanner.is_alive('192.168.1.13'))
+    time.sleep(1)
