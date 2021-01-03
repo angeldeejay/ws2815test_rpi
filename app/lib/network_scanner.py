@@ -186,9 +186,3 @@ class NetworkScanner:
 
     def __log(self, a):
         print(self.__class__.__name__, a, sep=' => ', flush=True)
-
-
-scanner = NetworkScanner()
-while True:
-    print(scanner.is_alive('192.168.1.13'))
-    time.sleep(1)
