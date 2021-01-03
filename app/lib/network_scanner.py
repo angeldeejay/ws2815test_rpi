@@ -94,10 +94,11 @@ class NetworkScanner:
                 if ping_result:
                     ip_status['attempts'] = 0
                     ip_status['up'] = ping_result
+                    time.sleep(1)
                     # self.__log(str(p_ping.communicate()))
                 else:
                     if ip_status['up']:
-                        if ip_status['attempts'] < 10:
+                        if ip_status['attempts'] < 30:
                             ip_status['attempts'] += 1
                         else:
                             ip_status['attempts'] = 0
@@ -124,7 +125,7 @@ class NetworkScanner:
             time.sleep(0.1)
 
     def __init_status(self):
-        for ip in [f'{self.prefix}.{str(i)}' for i in [13, 20, 151, 203]]:
+        for ip in [f'{self.prefix}.{str(i)}' for i in [13, 20, 153, 203]]:
             self.state[ip] = {'up': False, 'attempts': 0}
 
     def __init_workers(self):
@@ -180,8 +181,16 @@ class NetworkScanner:
             is_alive = self.state[ip]['up']
             return is_alive
         except Exception as e:
-            self.__log(e)
             pass
+        return False
+
+    def wait_host(self, ip):
+        attempts = 0
+        while attempts < 10:
+            if self.is_alive(ip):
+                return True
+            attempts += 1
+            time.sleep(1)
         return False
 
     def __log(self, a):

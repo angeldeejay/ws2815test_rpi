@@ -13,6 +13,7 @@ class Sonoff:
         self.port = port
         self.device = device
         self.connected = False
+        self.initialized = False
         self.on = False
         self.client_id = f'rpi-{random.randint(1000000, 9999999)}'
         self.client = None
@@ -33,13 +34,15 @@ class Sonoff:
 
     def __on_message(self, client, userdata, message):
         status = str(message.payload.decode("utf-8"))
-        # self.__log(f'Status: {status}')
+        if not self.initialized:
+            self.__log(f'Initial status: {status}')
+            self.initialized = True
         self.on = status == "ON"
 
     def __on_disconnect(self, client, userdata, rc):
         self.__log('Disconnected. Reconnecting...')
 
-    def __connect(self, on_connect_lambda=None):
+    def __connect(self):
         self.client = mqtt_client.Client(self.client_id)
         self.client.on_connect = self.__on_connect
         self.client.on_message = self.__on_message
@@ -62,13 +65,17 @@ class Sonoff:
 
     def turn_on(self):
         if not self.on:
-            self.__log(f"Turning on {self}")
-            self.__publish(f'cmnd/{self.device}/Power', 1)
+            self.__log(f'Turning on {self}')
+            while not self.on:
+                self.__publish(f'cmnd/{self.device}/Power', 1)
+                time.sleep(0.1)
 
     def turn_off(self):
         if self.on:
-            self.__log(f"Turning off {self}")
-            self.__publish(f'cmnd/{self.device}/Power', 0)
+            self.__log(f'Turning off {self}')
+            while self.on:
+                self.__publish(f'cmnd/{self.device}/Power', 0)
+                time.sleep(0.1)
 
     def toggle_off_on(self):
         self.__publish(f'cmnd/{self.device}/Power', 'TOGGLE')
