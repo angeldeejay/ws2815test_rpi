@@ -61,7 +61,7 @@ class Thread(threading.Thread):
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=10):
+    def __init__(self, prefix='192.168.1', timeout=1):
         self.prefix = prefix
         self.timeout = timeout
         self.__running = False
@@ -85,15 +85,19 @@ class NetworkScanner:
                     p_ping = call_process(args, shell=False, stdout=PIPE)
                     ping_result = (p_ping.wait() == 0)
                     if ping_result:
-                        ip_status['last_ping'] = ping_result
+                        ip_status['attempts'] = 0
                         ip_status['up'] = ping_result
                         # self.__log(str(p_ping.communicate()))
                     else:
-                        if not ip_status['last_ping']:
-                            ip_status['up'] = ping_result
+                        if ip_status['up']:
+                            if ip_status['attempts'] < 30:
+                                ip_status['attempts'] += 1
+                            else:
+                                ip_status['attempts'] = 0
+                                ip_status['up'] = ping_result
                         else:
-                            ip_status['up'] = ip_status['last_ping']
-                        ip_status['last_ping'] = ping_result
+                            ip_status['attempts'] = 0
+                            ip_status['up'] = ping_result
                     self.__out_queue.put((ip, ip_status))
                     self.__in_queue.task_done()
                 except:
@@ -116,13 +120,13 @@ class NetworkScanner:
                     self.state[ip] = ip_status
                     if self.__running:
                         self.__in_queue.put((ip, ip_status))
-                except Exception as e:
+                except:
                     pass
             time.sleep(0.1)
 
     def __init_status(self):
         for ip in [f'{self.prefix}.{str(i)}' for i in range(1, 255)]:
-            self.state[ip] = {'last_ping': False, 'up': False}
+            self.state[ip] = {'up': False, 'attempts': 0}
 
     def __init_workers(self):
         main_thread = Thread(target=self.__process, args=[])
@@ -182,5 +186,3 @@ class NetworkScanner:
 
     def __log(self, a):
         print(self.__class__.__name__, a, sep=' => ', flush=True)
-
-# scanner = NetworkScanner()
