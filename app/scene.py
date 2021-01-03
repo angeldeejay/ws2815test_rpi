@@ -114,7 +114,7 @@ else:
                         pass
                     controller = None
 
-            time.sleep(0.5)
+            time.sleep(1)
     except KeyboardInterrupt:
         pass
     finally:

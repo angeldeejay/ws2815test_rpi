@@ -55,19 +55,18 @@ class Thread(threading.Thread):
         _async_raise(self._get_my_tid(), exctype)
 
     def terminate(self):
-        """raises SystemExit in the context of the given thread, which should 
+        """raises SystemExit in the context of the given thread, which should
         cause the thread to exit silently (unless caught)"""
         self.raise_exc(SystemExit)
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=0.5):
+    def __init__(self, prefix='192.168.1', timeout=1):
         self.prefix = prefix
         self.timeout = timeout
         self.__running = False
         self.__workers = []
         self.__in_queue = queue.Queue()
-        self.__out_queue = queue.Queue()
         self.state = {}
         self.start()
 
@@ -80,49 +79,33 @@ class NetworkScanner:
             if not self.__running:
                 break
             try:
-                (ip, ip_status) = self.__in_queue.get()
+                ip = self.__in_queue.get()
+                args = ['/bin/ping', '-c', '1', '-W',
+                        str(self.timeout), ip]
 
-                ping_result = False
-                try:
-                    args = ['/bin/ping', '-c', '1', '-W',
-                            str(self.timeout), ip]
-                    p_ping = call_process(args, shell=False, stdout=PIPE)
-                    ping_result = (p_ping.wait() == 0)
-                except:
-                    pass
-
-                if ping_result:
-                    ip_status['attempts'] = 0
-                    ip_status['up'] = ping_result
-                    time.sleep(1)
-                    # self.__log(str(p_ping.communicate()))
+                if call_process(args, shell=False, stdout=PIPE).wait() == 0:
+                    self.state[ip] = {'up': True, 'attempts': 0}
                 else:
-                    if ip_status['up']:
-                        if ip_status['attempts'] < 30:
-                            ip_status['attempts'] += 1
+                    if self.state[ip]['up']:
+                        if self.state[ip]['attempts'] < 20:
+                            if self.state[ip]['attempts'] == 10:
+                                self.__log(f'Lost connection with {ip}. Trying to reach it...')
+                            self.state[ip] = {'up': self.state[ip]['up'], 'attempts': self.state[ip]['attempts'] + 1}
                         else:
-                            ip_status['attempts'] = 0
-                            ip_status['up'] = ping_result
+                            self.state[ip] = {'up': False, 'attempts': 0}
+                            self.__log(f'{ip} is unreachable')
                     else:
-                        ip_status['attempts'] = 0
-                        ip_status['up'] = ping_result
-                self.state[ip] = ip_status
-                self.__in_queue.put((ip, ip_status))
-                self.__in_queue.task_done()
-            except Exception as e:
-                self.__log(e)
+                        self.state[ip] = {'up': False, 'attempts': 0}
+            except:
                 pass
-            time.sleep(0.1)
+            self.__in_queue.task_done()
+            time.sleep(0.5)
+            self.__in_queue.put(ip)
 
     def __process(self):
         for (ip, ip_status) in self.state.items():
-            self.__in_queue.put((ip, ip_status))
+            self.__in_queue.put(ip)
         self.__in_queue.join()
-
-        while True:
-            if not self.__running:
-                break
-            time.sleep(0.1)
 
     def __init_status(self):
         for ip in [f'{self.prefix}.{str(i)}' for i in [13, 20, 153, 203]]:
@@ -146,10 +129,9 @@ class NetworkScanner:
     def stop(self):
         self.__log("Stopping...")
         self.__running = False
-        for q in [self.__in_queue, self.__out_queue]:
-            self.__log("Dequeue %s" % str(q))
-            with q.mutex:
-                q.queue.clear()
+        self.__log("Dequeue %s" % str(self.__in_queue))
+        with self.__in_queue.mutex:
+            self.__in_queue.queue.clear()
 
         self.__log("Terminating %d workers" % len(self.__workers))
         for worker in self.__workers:
@@ -177,6 +159,7 @@ class NetworkScanner:
         self.__log("Started")
 
     def is_alive(self, ip):
+        # self.__log(self.state)
         try:
             is_alive = self.state[ip]['up']
             return is_alive
