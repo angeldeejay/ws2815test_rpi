@@ -87,7 +87,7 @@ class NetworkScanner:
                     self.state[ip] = {'up': True, 'attempts': 0}
                 else:
                     if self.state[ip]['up']:
-                        if self.state[ip]['attempts'] < 100:
+                        if self.state[ip]['attempts'] < 50:
                             if self.state[ip]['attempts'] == 5:
                                 self.__log(f'Lost connection with {ip}. Trying to reach it...')
                             self.state[ip] = {'up': self.state[ip]['up'], 'attempts': self.state[ip]['attempts'] + 1}
