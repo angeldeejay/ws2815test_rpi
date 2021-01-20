@@ -36,34 +36,16 @@ log(f'Sonoff detected!')
 sonoff = Sonoff(broker=sonoff_broker, device="desktop")
 controller = None
 pixels = None
+fan_thread = None
 night_mode = False
 
-def load_pixels():
-    global pixels
-    while pixels is None:
-        try:
-            placeholder = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
-            pixels = placeholder
-        except e:
-            pixels = None
-            pass
-        time.sleep(0.5)
-
-def unload_pixels():
-    global fan_thread
+def turn_on_screen(on):
+    brightness = 64 if on == True else 10
     try:
-        fan_thread.join(0)
-    except e:
-        print(e)
-        pass
-
-    global pixels
-    load_pixels()
-    try:
-        shutdownPixels(pixels)
-        pixels.deinit()
-        pixels = None
-    except e:
+        f = open('/sys/class/backlight/rpi_backlight/brightness', 'w')
+        f.write(brightness)
+        f.close()
+    except:
         pass
 
 def pixels_animation():
@@ -73,19 +55,53 @@ def pixels_animation():
     while True:
         try:
             if scanner.is_alive(main_host):
+                turn_on_screen(True)
                 load_pixels()
                 if night_mode:
                     RainbowCycle(pixels, 0.001, 1)
                 else:
                     NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
             else:
+                turn_on_screen(False)
                 unload_pixels()
         except:
             pass
 
-fan_thread = Thread(target=pixels_animation, args=[])
-fan_thread.setDaemon(True)
-fan_thread.start()
+def load_pixels():
+    global pixels
+    global fan_thread
+    if pixels is None:
+        while pixels is None:
+            try:
+                placeholder = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+                pixels = placeholder
+            except:
+                pixels = None
+                pass
+            time.sleep(0.5)
+
+    if fan_thread is None:
+        fan_thread = Thread(target=pixels_animation, args=[])
+        fan_thread.setDaemon(True)
+        fan_thread.start()
+
+def unload_pixels():
+    global fan_thread
+    if fan_thread is not None:
+        try:
+            fan_thread.join(0)
+        except:
+            pass
+        fan_thread = None
+
+    global pixels
+    load_pixels()
+    try:
+        shutdownPixels(pixels)
+        pixels.deinit()
+        pixels = None
+    except:
+        pass
 
 def shutdown():
     global controller
@@ -125,6 +141,7 @@ if len(argv) > 1 and argv[1] == '--off':
 else:
     try:
         while True:
+            load_pixels()
             preset = None
             speed = None
             night_mode = evaluate_day_night(start_at, end_at, date_fmt, time_fmt)
