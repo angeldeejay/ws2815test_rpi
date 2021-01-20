@@ -67,7 +67,6 @@ def pixels_animation():
         load_pixels()
         try:
             if scanner.is_alive(main_host):
-                print([scanner.is_alive(main_host), night_mode])
                 if night_mode:
                     RainbowCycle(pixels, 0.001, 1)
                 else:
