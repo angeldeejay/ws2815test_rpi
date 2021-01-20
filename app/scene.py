@@ -43,7 +43,8 @@ def load_pixels():
     while pixels is None:
         try:
             pixels = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
-        except:
+        except e:
+            print(e)
             pixels = None
             pass
         time.sleep(0.5)
@@ -52,30 +53,36 @@ def unload_pixels():
     global fan_thread
     try:
         fan_thread.join(0)
-    except:
+    except e:
+        print(e)
         pass
 
     global pixels
     load_pixels()
-    try:
-        shutdownPixels(pixels)
-        pixels.deinit()
-        pixels = None
-    except:
-        pass
+    while pixels is not None:
+        try:
+            shutdownPixels(pixels)
+            pixels.deinit()
+            pixels = None
+        except e:
+            print(e)
+            pass
+        time.sleep(0.5)
 
 def pixels_animation():
     global scanner
     global night_mode
     global main_host
     while True:
-        load_pixels()
         try:
             if scanner.is_alive(main_host):
+                load_pixels()
                 if night_mode:
                     RainbowCycle(pixels, 0.001, 1)
                 else:
                     NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
+            else:
+                unload_pixels()
         except:
             pass
 
