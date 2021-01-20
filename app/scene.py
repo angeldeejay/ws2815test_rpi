@@ -42,9 +42,9 @@ def load_pixels():
     global pixels
     while pixels is None:
         try:
-            pixels = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+            placeholder = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+            pixels = placeholder
         except e:
-            print(e)
             pixels = None
             pass
         time.sleep(0.5)
@@ -59,15 +59,12 @@ def unload_pixels():
 
     global pixels
     load_pixels()
-    while pixels is not None:
-        try:
-            shutdownPixels(pixels)
-            pixels.deinit()
-            pixels = None
-        except e:
-            print(e)
-            pass
-        time.sleep(0.5)
+    try:
+        shutdownPixels(pixels)
+        pixels.deinit()
+        pixels = None
+    except e:
+        pass
 
 def pixels_animation():
     global scanner
