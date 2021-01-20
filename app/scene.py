@@ -59,11 +59,15 @@ def unload_pixels():
         except:
             pass
 
-def pixels_animation(scanner, night_mode, main_host):
+def pixels_animation():
+    global scanner
+    global night_mode
+    global main_host
     while True:
         load_pixels()
         try:
             if scanner.is_alive(main_host):
+                print([scanner.is_alive(main_host), night_mode])
                 if night_mode:
                     RainbowCycle(pixels, 0.001, 1)
                 else:
@@ -71,7 +75,7 @@ def pixels_animation(scanner, night_mode, main_host):
         except:
             pass
 
-fan_thread = Thread(target=pixels_animation, args=[scanner, night_mode, main_host])
+fan_thread = Thread(target=pixels_animation, args=[])
 fan_thread.setDaemon(True)
 fan_thread.start()
 
