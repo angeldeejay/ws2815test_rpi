@@ -85,6 +85,8 @@ class NetworkScanner:
                         str(self.timeout), ip]
 
                 if call_process(args, shell=False, stdout=PIPE).wait() == 0:
+                    if not self.state[ip]['up']:
+                        self.__log(f'{ip} found!')
                     self.state[ip] = {'up': True, 'attempts': 0}
                 else:
                     if self.state[ip]['up']:

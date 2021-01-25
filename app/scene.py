@@ -3,10 +3,11 @@ from lib.devices import Sonoff
 from lib.network_scanner import NetworkScanner
 from lib.pyledshop import WifiLedShopLight
 from lib.utils import evaluate_day_night
+from subprocess import Popen as call_process, PIPE
 from sys import argv
+from threading import Thread
 import board
 import neopixel
-from threading import Thread
 import time
 
 scanner = NetworkScanner()
@@ -40,11 +41,9 @@ fan_thread = None
 night_mode = False
 
 def turn_on_screen(on):
-    brightness = 64 if on == True else 10
     try:
-        f = open('/sys/class/backlight/rpi_backlight/brightness', 'w')
-        f.write(brightness)
-        f.close()
+        brightness = 64 if on == True else 0
+        call_process(f'echo {brightness} > /sys/class/backlight/rpi_backlight/brightness', shell=True, stdout=PIPE).wait()
     except:
         pass
 
