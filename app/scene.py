@@ -6,9 +6,11 @@ from lib.utils import evaluate_day_night
 from subprocess import Popen as call_process, PIPE
 from sys import argv
 from threading import Thread
-import board
-import neopixel
+import lib.neopixel.neopixel as neopixel
+import lib.neopixel.board as board
 import time
+import traceback
+import os
 
 scanner = NetworkScanner()
 
@@ -17,8 +19,10 @@ controller_host = "192.168.1.203"
 sonoff_host = "192.168.1.153"
 sonoff_broker = "192.168.1.20"
 
+
 def log(e):
     print(__name__, e)
+
 
 is_alive = False
 last_ping = False
@@ -40,31 +44,34 @@ pixels = None
 fan_thread = None
 night_mode = False
 
+
 def turn_on_screen(on):
-    try:
-        brightness = 64 if on == True else 0
-        call_process(f'echo {brightness} > /sys/class/backlight/rpi_backlight/brightness', shell=True, stdout=PIPE).wait()
-    except:
-        pass
+    path = '/sys/class/backlight/rpi_backlight/brightness'
+    if os.path.exists(path):
+        try:
+            brightness = 64 if on == True else 0
+            call_process(
+                f'echo {brightness} > {path} > /devnull', shell=True, stdout=PIPE).wait()
+        except:
+            pass
+
 
 def pixels_animation():
     global scanner
     global night_mode
     global main_host
     while True:
-        try:
-            if scanner.is_alive(main_host):
-                turn_on_screen(True)
-                load_pixels()
-                if night_mode:
-                    RainbowCycle(pixels, 0.001, 1)
-                else:
-                    NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
+        if scanner.is_alive(main_host):
+            turn_on_screen(True)
+            load_pixels()
+            if night_mode:
+                RainbowCycle(pixels, 0.001, 1)
             else:
-                turn_on_screen(False)
-                unload_pixels()
-        except:
-            pass
+                NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
+        else:
+            turn_on_screen(False)
+            unload_pixels()
+
 
 def load_pixels():
     global pixels
@@ -72,9 +79,11 @@ def load_pixels():
     if pixels is None:
         while pixels is None:
             try:
-                placeholder = neopixel.NeoPixel(board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+                placeholder = neopixel.NeoPixel(
+                    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
                 pixels = placeholder
             except:
+                traceback.print_exc()
                 pixels = None
                 pass
             time.sleep(0.5)
@@ -83,6 +92,7 @@ def load_pixels():
         fan_thread = Thread(target=pixels_animation, args=[])
         fan_thread.setDaemon(True)
         fan_thread.start()
+
 
 def unload_pixels():
     global fan_thread
@@ -101,6 +111,7 @@ def unload_pixels():
         pixels = None
     except:
         pass
+
 
 def shutdown():
     global controller
@@ -143,7 +154,8 @@ else:
             load_pixels()
             preset = None
             speed = None
-            night_mode = evaluate_day_night(start_at, end_at, date_fmt, time_fmt)
+            night_mode = evaluate_day_night(
+                start_at, end_at, date_fmt, time_fmt)
             # Scene lights
             if sonoff.connected:
                 if scanner.is_alive(main_host):
@@ -190,5 +202,6 @@ else:
     except KeyboardInterrupt:
         pass
     finally:
-        shutdown()
+        traceback.print_exc()
+        # shutdown()
         pass

@@ -1,10 +1,7 @@
 import time
-import board
-import neopixel
 import random
 import math
 import serial
-import ctypes
 from lib.utils import *
 from lib.colors import *
 
@@ -162,7 +159,6 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-                # pixels.fill(brightnessRGB(redo, greeno, blueo, ii)) #strip.setBrightness(ii)
             pixels.show()
             time.sleep(beat1FadeInDelay)
         for ii in range(252, 3, - beat1Step):  # for (int ii = 252 ; ii > 3 ; ii = ii - x){
@@ -171,7 +167,6 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-                # pixels.fill(brightnessRGB(redo, greeno, blueo, ii)) #strip.setBrightness(ii)
             pixels.show()
             time.sleep(beat1FadeOutDelay)
         time.sleep(beat1Delay)
@@ -181,7 +176,6 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-                # pixels.fill(brightnessRGB(redo, greeno, blueo, ii)) #strip.setBrightness(ii)
             pixels.show()
             time.sleep(beat2FadeInDelay)
         for ii in range(252, 3, - beat1Step):  # for (int ii = 255 ; ii > 1 ; ii = ii - y){
@@ -190,7 +184,6 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-                # pixels.fill(brightnessRGB(redo, greeno, blueo, ii)) #strip.setBrightness(ii)
             pixels.show()
             time.sleep(beat2FadeOutDelay)
         time.sleep(.050)
@@ -381,7 +374,6 @@ def TheaterChaseCustom(pixels, colorobj, darkspace, cycles, SpeedDelay):
             for i in range(0, num_pixels, n):
                 for index in range(0, colorCount, 1):
                     if i + q + index < num_pixels:
-                        #print("pixel=", i + q + index, "index", index, "i", i, "q", q, "colorobj[index]", colorobj[index])
                         pixels[i + q + index] = colorobj[index]
             pixels.show()
             time.sleep(SpeedDelay)
@@ -526,11 +518,11 @@ def Sparkle(pixels, red, green, blue, Count, SpeedDelay):
     num_pixels = pixels._pixels
 
     for i in range(Count):
-        Pixel = random.randint(0, num_pixels - 1)
-        pixels[Pixel] = (red, green, blue)
+        pixel = random.randint(0, num_pixels - 1)
+        pixels[pixel] = (red, green, blue)
         pixels.show()
         time.sleep(SpeedDelay)
-        pixels[Pixel] = (0, 0, 0)
+        pixels[pixel] = (0, 0, 0)
 
 
 def SnowSparkle(pixels, red, green, blue, Count, SparkleDelay, SpeedDelay):
@@ -538,11 +530,11 @@ def SnowSparkle(pixels, red, green, blue, Count, SparkleDelay, SpeedDelay):
     pixels.fill((red, green, blue))
 
     for i in range(Count):
-        Pixel = random.randint(0, num_pixels - 1)
-        pixels[Pixel] = (255, 255, 255)
+        pixel = random.randint(0, num_pixels - 1)
+        pixels[pixel] = (255, 255, 255)
         pixels.show()
         time.sleep(SparkleDelay)
-        pixels[Pixel] = (red, green, blue)
+        pixels[pixel] = (red, green, blue)
         pixels.show()
         time.sleep(SpeedDelay)
 
