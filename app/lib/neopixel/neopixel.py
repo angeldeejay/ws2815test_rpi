@@ -81,6 +81,6 @@ except:
             for r, g, b in self._data:
                 color = reset + bg('#%02x%02x%02x' % (r, g, b))
                 output = output + color + '  ' + reset
-            print(reset + self.__class__.__name__, output, sep=' => ', flush=True, end=f"\r")
+            print(reset + self.__class__.__name__ + 'Simulation', output, sep=' => ', flush=True, end=f"\r")
 
     pass

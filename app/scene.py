@@ -9,7 +9,6 @@ from threading import Thread
 import lib.neopixel.neopixel as neopixel
 import lib.neopixel.board as board
 import time
-import traceback
 import os
 
 scanner = NetworkScanner()
@@ -83,7 +82,6 @@ def load_pixels():
                     board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
                 pixels = placeholder
             except:
-                traceback.print_exc()
                 pixels = None
                 pass
             time.sleep(0.5)
@@ -202,6 +200,5 @@ else:
     except KeyboardInterrupt:
         pass
     finally:
-        traceback.print_exc()
-        # shutdown()
+        shutdown()
         pass
