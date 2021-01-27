@@ -6,9 +6,20 @@ from lib.utils import evaluate_day_night
 from subprocess import Popen as call_process, PIPE
 from sys import argv
 from threading import Thread
-import lib.neopixel.neopixel as neopixel
-import lib.neopixel.board as board
+try:
+    import neopixel
+except:
+    import lib.neopixel.neopixel as neopixel
+    pass
+
+try:
+    import board
+except:
+    import lib.neopixel.board as board
+    pass
+
 import time
+import traceback
 import os
 
 scanner = NetworkScanner()
@@ -52,6 +63,7 @@ def turn_on_screen(on):
             call_process(
                 f'echo {brightness} > {path} > /devnull', shell=True, stdout=PIPE).wait()
         except:
+            traceback.print_exc()
             pass
 
 
@@ -59,14 +71,16 @@ def pixels_animation():
     global scanner
     global night_mode
     global main_host
+    global pixels
     while True:
         if scanner.is_alive(main_host):
             turn_on_screen(True)
             load_pixels()
-            if night_mode:
-                RainbowCycle(pixels, 0.001, 1)
-            else:
-                NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
+            if pixels is not None:
+                if night_mode:
+                    RainbowCycle(pixels, 0.001, 1)
+                else:
+                    NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
         else:
             turn_on_screen(False)
             unload_pixels()
@@ -75,16 +89,16 @@ def pixels_animation():
 def load_pixels():
     global pixels
     global fan_thread
-    if pixels is None:
-        while pixels is None:
-            try:
-                placeholder = neopixel.NeoPixel(
-                    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
-                pixels = placeholder
-            except:
-                pixels = None
-                pass
-            time.sleep(0.5)
+    while pixels is None:
+        try:
+            placeholder = neopixel.NeoPixel(
+                board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+            pixels = placeholder
+        except:
+            traceback.print_exc()
+            pixels = None
+            pass
+        time.sleep(0.1)
 
     if fan_thread is None:
         fan_thread = Thread(target=pixels_animation, args=[])
@@ -93,22 +107,31 @@ def load_pixels():
 
 
 def unload_pixels():
+    global pixels
     global fan_thread
-    if fan_thread is not None:
+    while True:
         try:
+            if fan_thread is None:
+                break
             fan_thread.join(0)
+            fan_thread = None
         except:
             pass
-        fan_thread = None
-
-    global pixels
+        time.sleep(0.1)
     load_pixels()
-    try:
-        shutdownPixels(pixels)
-        pixels.deinit()
-        pixels = None
-    except:
-        pass
+
+    while True:
+        try:
+            if pixels is None:
+                break
+            shutdownPixels(pixels)
+            pixels.deinit()
+            pixels = None
+        except Exception as e:
+            print(e)
+            pass
+        time.sleep(0.1)
+    pixels = None
 
 
 def shutdown():
@@ -162,6 +185,7 @@ else:
                             try:
                                 controller.close()
                             except:
+                                traceback.print_exc()
                                 pass
                         controller = None
                         sonoff.turn_on()
@@ -193,6 +217,7 @@ else:
                     try:
                         controller.close()
                     except:
+                        traceback.print_exc()
                         pass
                     controller = None
 

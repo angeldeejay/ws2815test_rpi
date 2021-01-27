@@ -20,8 +20,7 @@ class NetworkScanner:
         self.__threads = threads
         self.__workers = []
         self.__queue = queue.Queue()
-        self.__ttl = 5 # 1 minute
-        # self.__ttl = 60 # 1 minute
+        self.__ttl = 40 # 1 minute
         self.state = {}
         self.start()
 
@@ -114,9 +113,8 @@ class NetworkScanner:
         self.__start_workers()
 
     def is_alive(self, ip):
-        # self.__log(self.state)
         try:
-            is_alive = self.state[ip]['up']
+            is_alive = self.state[ip]['up'] if ip in self.state else False
             return is_alive
         except Exception as e:
             pass
