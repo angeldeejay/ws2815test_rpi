@@ -3,7 +3,7 @@ try:
 except:
     import time
     import math
-    from colored import fg, bg, attr
+    from colors import color as colorize
 
     # Pixel color order constants
     RGB = "RGB"
@@ -76,11 +76,10 @@ except:
             time.sleep(ms / 1000)
 
         def __draw(self):
-            reset = attr('reset')
             output = ''
             for r, g, b in self._data:
-                color = reset + bg('#%02x%02x%02x' % (r, g, b))
-                output = output + color + '  ' + reset
-            print(reset + self.__class__.__name__ + 'Simulation', output, sep=' => ', flush=True, end=f"\r")
+                output = output + colorize('🮿', (r, g, b), None) + ' '
+            print(self.__class__.__name__, output,
+                  sep=' => ', flush=True, end=f"\r")
 
     pass
