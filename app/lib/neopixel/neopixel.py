@@ -1,6 +1,7 @@
 import time
 import math
-from threading import Thread
+import sys
+from lib.threading import Thread
 from colors import color as colorize
 
 # Pixel color order constants
@@ -13,6 +14,7 @@ RGBW = "RGBW"
 GRBW = "GRBW"
 """Green Red Blue White"""
 
+
 class NeoPixel(list):
     def __init__(self, pin, n, *, bpp=3, brightness=1.0, auto_write=True, pixel_order=None):
         self._pixels = n
@@ -21,11 +23,24 @@ class NeoPixel(list):
         self.brightness = min(max(int(round(100 * brightness, 0)), 100), 0)
         self._data = []
         self._byteorder_string = pixel_order
+        self.__thread = None
+        self.on = False
         self.begin()
 
+    def begin(self):
+        for i in range(self._pixels):
+            self._data.append((0, 0, 0))
+
+        if self.__thread is not None:
+            self.deinit()        
+        self.on = True
+        self.__thread = Thread(target=self.simulate, args=[], daemon=True)
+        self.__thread.start()
+
     def deinit(self):
-        print('')
-        return
+        self.on = False
+        time.sleep(1)
+        self.__thread = None
 
     def __repr__(self):
         return "<{0} {1}>".format(self.__class__.__name__, self._data)
@@ -49,7 +64,7 @@ class NeoPixel(list):
 
     def __handle_write(self):
         if self.auto_write:
-            self.__draw()
+            self.show()
 
     def insert(self, ii, val):
         self._data.insert(ii, val)
@@ -59,13 +74,21 @@ class NeoPixel(list):
         self.insert(len(self._data), val)
         self.__handle_write()
 
-    def begin(self):
-        for i in range(self._pixels):
-            self._data.append((0, 0, 0))
-        self.__draw()
-
     def show(self):
-        self.__draw()
+        return
+
+    def simulate(self, end="\r"):
+        while True:
+            if not self.on:
+                break
+            try:
+                output = ' '.join([colorize('🮿', (r, g, b), None)
+                                for r, g, b in self._data])
+                sys.stdout.write(self.__class__.__name__ + ' => ' + output + end)
+                sys.stdout.flush()
+            except:
+                pass
+            time.sleep(0.01)
 
     def fill(self, color):
         for pixel in range(self._pixels):
@@ -76,12 +99,3 @@ class NeoPixel(list):
 
     def delay(self, ms):
         time.sleep(ms / 1000)
-
-    def __draw(self):
-        output = ''
-        for r, g, b in self._data:
-            output = output + colorize('🮿', (r, g, b), None) + ' '
-        print(self.__class__.__name__, output,
-                sep=' => ', flush=True, end=f"\r")
-
-pass

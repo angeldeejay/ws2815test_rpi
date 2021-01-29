@@ -4,8 +4,8 @@ import asyncore
 import binascii
 import random
 import socket
-import threading
 import time
+
 
 class LedStrip:
     def __init__(self, name, gpio_pin=None, led_count=None, reverse=None, interval=None, frequency=None):
@@ -46,7 +46,7 @@ class LedStrip:
             True
         except:
             error_output = "\n\n\t" + format_exc().replace("\n", "\n\t")
-            self.log("\n\t" + error_output + "\n", "error")
+            self.__log("\n\t" + error_output + "\n", "error")
             pass
 
     def __lambda(self, instance):
@@ -63,13 +63,13 @@ class LedStrip:
             self.thread_active = True
             self.thread = Thread(target=self.animation,
                                  daemon=True, args=[self])
-            self.log("Starting thread")
+            self.__log("Starting thread")
             self.thread.start()
 
     def stop(self):
         self.thread_active = False
         if self.thread is not None:
-            self.log("Stopping thread")
+            self.__log("Stopping thread")
             while self.thread.is_alive():
                 sleep(0.01)
 
@@ -82,11 +82,10 @@ class LedStrip:
 
         self.thread = None
         self.changed = False
-        self.log("Shutted down")
+        self.__log("Shutted down")
 
-    def log(self, message, level="debug"):
-        print(str('[{:^7}]'.format(level.upper())) +
-              ' {' + str(self.name) + "}: " + str(message))
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __repr__(self):
         return self.__class__.__name__ + str(vars(self))
@@ -104,8 +103,8 @@ class Sonoff:
         self.client = None
         self.__connect()
 
-    def __log(self, a):
-        print(self.__class__.__name__, a, sep=' => ')
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:

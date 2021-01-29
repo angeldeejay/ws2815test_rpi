@@ -32,8 +32,8 @@ class WifiLedShopLight:
         self.sock = None
         self.reconnect()
 
-    def __log(self, a):
-        print(self.__class__.__name__, a, sep=' => ')
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __enter__(self):
         return self
@@ -79,8 +79,8 @@ class WifiLedShopLight:
         g = clamp(g)
         b = clamp(b)
         self.state.color = (r, g, b)
-        self.__log('Setting color %s' % str((r, g, b)))
         self.send_command(Command.SET_COLOR, [int(r), int(g), int(b)])
+        self.__log('Color setted to %s' % str((r, g, b)))
 
     def set_brightness(self, brightness=0):
         """
@@ -88,10 +88,10 @@ class WifiLedShopLight:
 
         :param brightness: An int describing the brightness (0 to 255, where 255 is the brightest)
         """
-        self.__log('Setting brightness %d' % brightness)
         brightness = clamp(brightness)
         self.state.brightness = brightness
         self.send_command(Command.SET_BRIGHTNESS, [int(brightness)])
+        self.__log('Brightness setted to %d' % brightness)
 
     def set_speed(self, speed=0):
         """
@@ -99,10 +99,10 @@ class WifiLedShopLight:
 
         :param speed: An int describing the speed an effect will play at. (0 to 255, where 255 is the fastest)
         """
-        self.__log('Setting speed %d' % speed)
         speed = clamp(speed)
         self.state.speed = speed
         self.send_command(Command.SET_SPEED, [int(speed)])
+        self.__log('Speed setted to %d' % speed)
 
     def set_preset(self, preset=0):
         """
@@ -110,11 +110,11 @@ class WifiLedShopLight:
 
         :param preset: The preset effect to use. Valid values are 0 to 255. See the MonoEffect enum, or MONO_EFFECTS and PRESET_EFFECTS for mapping.
         """
-        self.__log('Setting default preset %d' % preset)
         preset = clamp(preset, 0, 218)
         while self.state.mode != preset:
             self.send_command(Command.SET_PRESET, [int(preset)])
             self.sync_state()
+        self.__log('Default preset setted to %d' % preset)
 
     def set_custom(self, custom):
         """
@@ -122,11 +122,11 @@ class WifiLedShopLight:
 
         :param custom: The custom effect to use. Valid values are 1 to 12. See the CustomEffect enum.
         """
-        self.__log('Setting custom preset %d' % custom)
         custom = clamp(custom, 1, 12)
         while self.state.mode != (218 + custom):
             self.send_command(Command.SET_CUSTOM, [int(custom)])
             self.sync_state()
+        self.__log('Custom preset setted to %d' % custom)
 
     def toggle(self):
         """
@@ -142,16 +142,16 @@ class WifiLedShopLight:
         Toggles the light on only if it is not already on
         """
         if not self.state.is_on:
-            self.__log('Turning on')
             self.toggle()
+            self.__log('Turned on')
 
     def turn_off(self):
         """
         Toggles the light off only if it is not already off
         """
         if self.state.is_on:
-            self.__log('Turning off')
             self.toggle()
+            self.__log('Turned off')
 
     def set_segments(self, segments):
         """

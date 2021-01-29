@@ -5,7 +5,7 @@ from animations.snow import animate as snow_animation
 from rpi_ws281x import PixelStrip, Color
 from signal import signal, SIGSEGV
 from sys import argv
-from threading import Thread
+from lib.threading import Thread
 from time import sleep
 from traceback import format_exc
 
@@ -49,7 +49,7 @@ class LedStrip:
             True
         except:
             error_output = "\n\n\t" + format_exc().replace("\n", "\n\t")
-            self.log("\n\t" + error_output + "\n", "error")
+            self.__log("\n\t" + error_output + "\n", "error")
             pass
 
     def __lambda(self, instance):
@@ -66,13 +66,13 @@ class LedStrip:
             self.thread_active = True
             self.thread = Thread(target=self.animation,
                                  daemon=True, args=[self])
-            self.log("Starting thread")
+            self.__log("Starting thread")
             self.thread.start()
 
     def stop(self):
         self.thread_active = False
         if self.thread is not None:
-            self.log("Stopping thread")
+            self.__log("Stopping thread")
             while self.thread.is_alive():
                 sleep(0.01)
 
@@ -85,11 +85,10 @@ class LedStrip:
 
         self.thread = None
         self.changed = False
-        self.log("Shutted down")
+        self.__log("Shutted down")
 
-    def log(self, message, level="debug"):
-        print(str('[{:^7}]'.format(level.upper())) +
-              ' {' + str(self.name) + "}: " + str(message))
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __repr__(self):
         return self.__class__.__name__ + str(vars(self))

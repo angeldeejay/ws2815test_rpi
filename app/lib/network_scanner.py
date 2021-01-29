@@ -3,24 +3,27 @@
 # design to use data from/to SQL database
 # use standard linux /bin/ping utility
 
-import threading
 import time
 import re
 import inspect
 import queue
 from subprocess import Popen as call_process, PIPE
-from threading import *
+from lib.threading import Thread
 
 
 class NetworkScanner:
-    def __init__(self, prefix='192.168.1', timeout=1, threads=64):
+    def __init__(self, prefix='192.168.1', timeout=60, threads=64, ips=None):
         self.prefix = prefix
-        self.timeout = timeout
         self.__running = False
         self.__threads = threads
         self.__workers = []
+        self.__timeout_workers = {}
+        if ips is None:
+            self.__ips = [f'{self.prefix}.{str(i)}' for i in range(1, 255)]
+        else:
+            self.__ips = ips
         self.__queue = queue.Queue()
-        self.__ttl = 40 # 1 minute
+        self.__ttl = timeout
         self.state = {}
         self.start()
 
@@ -34,32 +37,58 @@ class NetworkScanner:
                 break
             try:
                 ip = self.__queue.get()
-                args = ['/bin/ping', '-c', '1', '-W',
-                        str(round(int(round(self.timeout, 0)) * 0.75, 2)), ip]
-
-                ping_result = call_process(args, shell=False, stdout=PIPE).wait()
+                args = ['/bin/ping', '-c', '1', '-W', '2', ip]
+                ping_result = call_process(
+                    args, shell=False, stdout=PIPE).wait()
                 if ping_result == 0:
-                    if not ip in self.state:
-                        self.__log(f'{ip} found!')
-                    elif self.state[ip]['attempts'] >= 2:
-                        self.__log(f'{ip} reconnected!')
-                    self.state[ip] = {'up': True, 'attempts': 0}
+                    self.__notify_alive(ip)
                 else:
-                    if ip in self.state:
-                        if self.state[ip]['up'] == True:
-                            if self.state[ip]['attempts'] < self.__ttl:
-                                if self.state[ip]['attempts'] == 2:
-                                    self.__log(f'Lost connection with {ip}. Trying to reach it...')
-                                self.state[ip] = {'up': self.state[ip]['up'], 'attempts': self.state[ip]['attempts'] + 1}
-                            else:
-                                self.__log(f'{ip} is unreachable')
-                                del self.state[ip]
-                        else:
-                            self.__log(f'{ip} is unreachable')
-                            del self.state[ip]
+                    self.__notify_timeout(ip)
             except:
                 pass
             self.__queue.task_done()
+            time.sleep(0.25)
+
+    def __notify_alive(self, ip):
+        if ip in self.__timeout_workers:
+            try:
+                self.__timeout_workers[ip].kill()
+            except:
+                pass
+        self.__timeout_workers = {}
+
+        if not ip in self.state:
+            self.__log(f'{ip} found!')
+        elif self.state[ip]['attempts'] >= int(round(self.__ttl / 4)):
+            self.__log(f'{ip} reconnected!')
+
+        self.state[ip] = {'up': True, 'attempts': 0}
+
+    def __notify_timeout(self, ip):
+        if ip not in self.__timeout_workers:
+            self.__timeout_workers[ip] = Thread(
+                target=self.__timeout_wait, args=[ip], daemon=True)
+            self.__timeout_workers[ip].start()
+
+    def __timeout_wait(self, ip):
+        while True:
+            if ip not in self.state:
+                break
+            else:
+                if self.state[ip]['attempts'] == int(round(self.__ttl / 4)):
+                    self.__log(f'{ip} lost. Trying to reach it...')
+                self.state[ip].update(
+                    {'attempts': self.state[ip]['attempts'] + 1})
+
+                if self.state[ip]['attempts'] > self.__ttl:
+                    self.__log(f'{ip} is unreachable')
+                    del self.state[ip]
+            time.sleep(1)
+
+        try:
+            del self.__timeout_workers[ip]
+        except:
+            pass
 
     def __process(self):
         while self.__running:
@@ -68,17 +97,16 @@ class NetworkScanner:
                 time.sleep(0.01)
 
     def __enqueue_ips(self):
-        for ip in [f'{self.prefix}.{str(i)}' for i in range(1, 255)]:
+        for ip in self.__ips:
             self.__queue.put(ip)
 
     def __init_workers(self):
         self.__log("Initializing workers")
-        main_thread = Thread(target=self.__process, args=[])
-        main_thread.setDaemon(True)
+        num_threads = min(self.__threads, len(self.__ips))
+        main_thread = Thread(target=self.__process, args=[], daemon=True)
         self.__workers.append(main_thread)
-        for i in range(0, self.__threads):
-            worker = Thread(target=self.__thread_pinger, args=[i])
-            worker.setDaemon(True)
+        for i in range(0, num_threads):
+            worker = Thread(target=self.__thread_pinger, args=[i], daemon=True)
             self.__workers.append(worker)
 
     def __start_workers(self):
@@ -94,10 +122,15 @@ class NetworkScanner:
         with self.__queue.mutex:
             self.__queue.queue.clear()
 
+        for worker in self.__timeout_workers.values():
+            if worker.is_alive():
+                worker.kill()
+
         self.__log("Terminating %d workers" % len(self.__workers))
+
         for worker in self.__workers:
             if worker.is_alive():
-                worker.join(0)
+                worker.kill()
 
         self.__log("%s workers terminated" % len(self.__workers))
         self.__workers = []
@@ -113,12 +146,7 @@ class NetworkScanner:
         self.__start_workers()
 
     def is_alive(self, ip):
-        try:
-            is_alive = self.state[ip]['up'] if ip in self.state else False
-            return is_alive
-        except Exception as e:
-            pass
-        return False
+        return ip in self.state and self.state[ip]['up'] == True
 
     def wait_host(self, ip):
         attempts = 0
@@ -129,5 +157,5 @@ class NetworkScanner:
             time.sleep(1)
         return False
 
-    def __log(self, a):
-        print(self.__class__.__name__, a, sep=' => ', flush=True)
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
