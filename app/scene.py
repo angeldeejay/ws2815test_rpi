@@ -85,7 +85,7 @@ def pixels_animation():
         else:
             turn_on_screen(False)
             if pixels is not None:
-                pixels.clear()
+                pixels.fill((0, 0, 0))
                 pixels.show()
         time.sleep(0.01)
 

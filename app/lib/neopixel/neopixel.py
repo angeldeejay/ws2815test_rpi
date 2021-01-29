@@ -32,7 +32,7 @@ class NeoPixel(list):
             self._data.append((0, 0, 0))
 
         if self.__thread is not None:
-            self.deinit()        
+            self.deinit()
         self.on = True
         self.__thread = Thread(target=self.simulate, args=[], daemon=True)
         self.__thread.start()
@@ -83,8 +83,9 @@ class NeoPixel(list):
                 break
             try:
                 output = ' '.join([colorize('🮿', (r, g, b), None)
-                                for r, g, b in self._data])
-                sys.stdout.write(self.__class__.__name__ + ' => ' + output + end)
+                                   for r, g, b in self._data])
+                sys.stdout.write(self.__class__.__name__ +
+                                 ' => ' + output + end)
                 sys.stdout.flush()
             except:
                 pass
@@ -93,9 +94,3 @@ class NeoPixel(list):
     def fill(self, color):
         for pixel in range(self._pixels):
             self._data[pixel] = color
-
-    def clear(self):
-        self.fill((0, 0, 0))
-
-    def delay(self, ms):
-        time.sleep(ms / 1000)
