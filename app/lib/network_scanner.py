@@ -47,7 +47,7 @@ class NetworkScanner:
             except:
                 pass
             self.__queue.task_done()
-            time.sleep(0.25)
+            time.sleep(0.5)
 
     def __notify_alive(self, ip):
         if ip in self.__timeout_workers:
@@ -55,7 +55,11 @@ class NetworkScanner:
                 self.__timeout_workers[ip].kill()
             except:
                 pass
-        self.__timeout_workers = {}
+
+            try:
+                del self.__timeout_workers[ip]
+            except:
+                pass
 
         if not ip in self.state:
             self.__log(f'{ip} found!')
