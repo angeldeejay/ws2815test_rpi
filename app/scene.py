@@ -61,9 +61,9 @@ def turn_on_screen(on):
     path = '/sys/class/backlight/rpi_backlight/brightness'
     if os.path.exists(path):
         try:
-            brightness = 64 if on == True else 0
+            brightness = 64 if on == True else 1
             call_process(
-                f'echo {brightness} > {path} > /dev/null', shell=True, stdout=PIPE).wait()
+                f'echo {brightness} > {path}', shell=True, stdout=PIPE).wait()
         except:
             traceback.print_exc()
             pass
