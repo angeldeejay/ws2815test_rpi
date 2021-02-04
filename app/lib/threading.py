@@ -22,7 +22,7 @@ class Thread(threading.Thread):
 
     def _get_my_tid(self):
         """Determines the instance's thread ID"""
-        if not self.isAlive():
+        if not self.is_alive():
             raise threading.ThreadError("Thread is not active")
 
         # do we have it cached?

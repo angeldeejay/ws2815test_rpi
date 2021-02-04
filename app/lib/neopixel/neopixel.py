@@ -16,7 +16,7 @@ GRBW = "GRBW"
 
 
 class NeoPixel(list):
-    def __init__(self, pin, n, *, bpp=3, brightness=1.0, auto_write=True, pixel_order=None):
+    def __init__(self, pin, n, *, bpp=3, brightness=1.0, auto_write=True, pixel_order=None, simulate=True):
         self._pixels = n
         self.pin = pin
         self.auto_write = auto_write
@@ -24,6 +24,7 @@ class NeoPixel(list):
         self._data = []
         self._byteorder_string = pixel_order
         self.__thread = None
+        self.__simulate = simulate
         self.on = False
         self.begin()
 
@@ -31,16 +32,18 @@ class NeoPixel(list):
         for i in range(self._pixels):
             self._data.append((0, 0, 0))
 
-        if self.__thread is not None:
-            self.deinit()
-        self.on = True
-        self.__thread = Thread(target=self.simulate, args=[], daemon=True)
-        self.__thread.start()
+        if self.__simulate == True:
+            if self.__thread is not None:
+                self.deinit()
+            self.on = True
+            self.__thread = Thread(target=self.simulate, args=[], daemon=True)
+            self.__thread.start()
 
     def deinit(self):
         self.on = False
-        time.sleep(1)
-        self.__thread = None
+        if self.__simulate == True:
+            time.sleep(1)
+            self.__thread = None
 
     def __repr__(self):
         return "<{0} {1}>".format(self.__class__.__name__, self._data)
@@ -78,18 +81,19 @@ class NeoPixel(list):
         return
 
     def simulate(self, end="\r"):
-        while True:
-            if not self.on:
-                break
-            try:
-                output = ' '.join([colorize('🮿', (r, g, b), None)
-                                   for r, g, b in self._data])
-                sys.stdout.write(self.__class__.__name__ +
-                                 ' => ' + output + end)
-                sys.stdout.flush()
-            except:
-                pass
-            time.sleep(0.01)
+        if self.__simulate == True:
+            while True:
+                if not self.on:
+                    break
+                try:
+                    output = ' '.join([colorize('🮿', (r, g, b), None)
+                                    for r, g, b in self._data])
+                    sys.stdout.write(self.__class__.__name__ +
+                                    ' => ' + output + end)
+                    sys.stdout.flush()
+                except:
+                    pass
+                time.sleep(0.01)
 
     def fill(self, color):
         for pixel in range(self._pixels):

@@ -4,12 +4,16 @@ from lib.network_scanner import NetworkScanner
 from lib.pyledshop import WifiLedShopLight
 from lib.threading import Thread
 from lib.utils import evaluate_day_night
+from optparse import OptionParser
 from subprocess import Popen as call_process, PIPE
 from sys import argv
+
+simulate_allowed=False
 try:
     import neopixel
 except:
     import lib.neopixel.neopixel as neopixel
+    simulate_allowed=True
     pass
 
 try:
@@ -21,6 +25,11 @@ except:
 import time
 import traceback
 import os
+
+parser = OptionParser()
+parser.add_option("--off", action="store_true", dest="terminate", default=False)
+parser.add_option("-q", "--quiet", action="store_false", dest="simulate", default=True)
+(options, _) = parser.parse_args()
 
 
 def log(a, sep=' => ', flush=True, end="\n"):
@@ -113,10 +122,17 @@ def stop_fan_threads():
 def load_pixels():
     global pixels
     global fan_thread
+    global simulate_allowed
+    global options
     while pixels is None:
         try:
-            placeholder = neopixel.NeoPixel(
-                board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
+            placeholder = None
+            if simulate_allowed == True:
+                placeholder = neopixel.NeoPixel(
+                    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB, simulate=options.simulate)
+            else:
+                placeholder = neopixel.NeoPixel(
+                    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
             pixels = placeholder
         except:
             traceback.print_exc()
@@ -178,7 +194,7 @@ def shutdown():
 
 if __name__ == '__main__':
     try:
-        if len(argv) > 1 and argv[1] == '--off':
+        if options.terminate == True:
             shutdown()
         else:
             load_pixels()

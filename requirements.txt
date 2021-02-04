@@ -1,0 +1,5 @@
+Adafruit-Blinka==5.13.0
+adafruit-circuitpython-neopixel==6.0.1
+ansicolors==1.1.8
+paho-mqtt==1.5.1
+rpi-ws281x==4.2.5
