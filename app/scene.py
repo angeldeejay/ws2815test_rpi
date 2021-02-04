@@ -40,7 +40,8 @@ ips = {
     'main_host': "192.168.1.13",
     'controller_host': "192.168.1.203",
     'sonoff_host': "192.168.1.153",
-    'sonoff_broker': "192.168.1.20",
+    'sonoff_broker': "localhost",
+    # 'sonoff_broker': "192.168.1.20",
 }
 
 log(ips)
