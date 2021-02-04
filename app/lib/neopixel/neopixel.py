@@ -86,7 +86,7 @@ class NeoPixel(list):
                 if not self.on:
                     break
                 try:
-                    output = ' '.join([colorize('🮿', (r, g, b), None)
+                    output = ''.join([colorize('█', (r, g, b), None)
                                     for r, g, b in self._data])
                     sys.stdout.write(self.__class__.__name__ +
                                     ' => ' + output + end)
