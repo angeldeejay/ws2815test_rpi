@@ -47,7 +47,7 @@ class NetworkScanner:
             except:
                 pass
             self.__queue.task_done()
-            time.sleep(0.5)
+            time.sleep(1)
 
     def __notify_alive(self, ip):
         if ip in self.__timeout_workers:
@@ -98,7 +98,7 @@ class NetworkScanner:
         while self.__running:
             self.__enqueue_ips()
             while not self.__queue.empty():
-                time.sleep(0.01)
+                time.sleep(1)
 
     def __enqueue_ips(self):
         for ip in self.__ips:
