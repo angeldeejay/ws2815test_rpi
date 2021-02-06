@@ -15,13 +15,11 @@ class RootService:
         self.mqtt_broker = "192.168.1.20"
 
         self.__log(f'Main Host:       {self.main_host}')
-        self.__log(f'Controller Host: {self.controller_host}')
         self.__log(f'Switch Host:     {self.switch_host}')
         self.__log(f'Switch Broker:   {self.mqtt_broker}')
 
         self.__scanner = NetworkScanner(ips=[
             self.main_host,
-            self.controller_host,
             self.switch_host,
             self.mqtt_broker
         ])
@@ -114,8 +112,7 @@ if __name__ == '__main__':
                       dest="terminate", default=False)
     parser.add_option("-q", "--quiet", action="store_true",
                       dest="quiet", default=False)
-    (options, args) = parser.parse_args()
-    strip_specs = list(map(lambda x: int(x), args.pop(0).split('-')))
+    (options, _) = parser.parse_args()
     
     main = RootService(quiet=options.quiet)
     try:
