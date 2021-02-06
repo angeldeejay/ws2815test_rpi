@@ -1,16 +1,16 @@
+from lib.animations import NewKITT, RainbowCycle, shutdown as shutdownPixels
+from lib.network_scanner import NetworkScanner
+from lib.threading import Thread
+from lib.utils import evaluate_day_night
 from paho.mqtt import client as mqtt_client
 from rpi_ws281x import PixelStrip, Color
+from subprocess import Popen as call_process, DEVNULL
 import asyncore
 import binascii
 import random
 import socket
 import time
 import traceback
-
-from lib.animations import NewKITT, RainbowCycle, shutdown as shutdownPixels
-from lib.network_scanner import NetworkScanner
-from lib.threading import Thread
-from lib.utils import evaluate_day_night
 
 hardware_available = False
 try:
@@ -98,12 +98,23 @@ class Fan:
             self.__scanner.stop()
             self.__scanner = None
 
+    def turn_screen(self, on):
+        try:
+            call_process(['/usr/bin/vcgencmd', 'display_power',
+                          str(1 if on else 0)], shell=False, stdout=DEVNULL)
+        except:
+            pass
+
     def __animate(self):
         while True:
             if not self.on:
                 break
 
-            if any(map(lambda ip: self.__scanner.is_alive(ip), self.__ips)):
+            alive = any(
+                map(lambda ip: self.__scanner.is_alive(ip), self.__ips))
+            self.turn_screen(alive)
+
+            if alive:
                 if self.__pixels is not None:
                     if evaluate_day_night(self.__start_at, self.__end_at, self.__date_fmt, self.__time_fmt):
                         RainbowCycle(self.__pixels, 0.001, 1)
@@ -166,7 +177,6 @@ class Sonoff:
         self.client.on_disconnect = self.__on_disconnect
         self.client.connect_async(self.broker, self.port)
         self.client.loop_start()
-
 
     def __publish(self, topic, message=None):
         if self.connected:
