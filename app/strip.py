@@ -38,7 +38,7 @@ class StripService:
         num_pixels = pixels._pixels
         if self.__is_night():
             # RainbowCycle(pixels, SpeedDelay, cycles)
-            RainbowCycle(pixels, 4 / 255, 1)
+            RainbowCycle(pixels, 3 / 255, 1)
         else:
             # NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles)
             eye_size = max(1, int(round(num_pixels / 10)))

@@ -200,7 +200,7 @@ class Fan:
                 if self.__pixels is not None:
                     if evaluate_day_night(self.__start_at, self.__end_at, self.__date_fmt, self.__time_fmt):
                         # RainbowCycle(pixels, SpeedDelay, cycles)
-                        RainbowCycle(self.__pixels, 4 / 255, 1)
+                        RainbowCycle(self.__pixels, 3 / 255, 1)
                     else:
                         # NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles)
                         eye_size = max(1, int(round(self.led_count / 10)))
