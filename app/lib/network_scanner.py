@@ -7,6 +7,7 @@ import time
 import re
 import inspect
 import queue
+import traceback
 from subprocess import Popen as call_process, PIPE
 from lib.threading import Thread
 
@@ -25,7 +26,10 @@ class NetworkScanner:
         self.__queue = queue.Queue()
         self.__ttl = timeout
         self.state = {}
+        self.initialized = False
         self.start()
+        while not self.initialized:
+            time.sleep(1)
 
     def __repr__(self):
         return f'@{self.__class__.__name__}'
@@ -45,25 +49,28 @@ class NetworkScanner:
                 else:
                     self.__notify_timeout(ip)
             except:
+                self.__log(traceback.format_exc())
                 pass
             self.__queue.task_done()
-            time.sleep(1)
+            time.sleep(0.1)
 
     def __notify_alive(self, ip):
         if ip in self.__timeout_workers:
             try:
                 self.__timeout_workers[ip].kill()
             except:
+                self.__log(traceback.format_exc())
                 pass
 
             try:
                 del self.__timeout_workers[ip]
             except:
+                self.__log(traceback.format_exc())
                 pass
 
         if not ip in self.state:
             self.__log(f'{ip} found!')
-        elif self.state[ip]['attempts'] >= int(round(self.__ttl / 4)):
+        elif self.__ttl > 0 and self.state[ip]['attempts'] >= int(round(self.__ttl / 4)):
             self.__log(f'{ip} reconnected!')
 
         self.state[ip] = {'up': True, 'attempts': 0}
@@ -79,7 +86,7 @@ class NetworkScanner:
             if ip not in self.state:
                 break
             else:
-                if self.state[ip]['attempts'] == int(round(self.__ttl / 4)):
+                if self.__ttl > 0 and self.state[ip]['attempts'] == int(round(self.__ttl / 4)):
                     self.__log(f'{ip} lost. Trying to reach it...')
                 self.state[ip].update(
                     {'attempts': self.state[ip]['attempts'] + 1})
@@ -87,18 +94,21 @@ class NetworkScanner:
                 if self.state[ip]['attempts'] > self.__ttl:
                     self.__log(f'{ip} is unreachable')
                     del self.state[ip]
-            time.sleep(1)
+
+                time.sleep(1)
 
         try:
             del self.__timeout_workers[ip]
         except:
+            self.__log(traceback.format_exc())
             pass
 
     def __process(self):
         while self.__running:
             self.__enqueue_ips()
             while not self.__queue.empty():
-                time.sleep(1)
+                time.sleep(0.01)
+            self.initialized = True
 
     def __enqueue_ips(self):
         for ip in self.__ips:
@@ -152,9 +162,9 @@ class NetworkScanner:
     def is_alive(self, ip):
         return ip in self.state and self.state[ip]['up'] == True
 
-    def wait_host(self, ip):
+    def wait_host(self, ip, timeout=10):
         attempts = 0
-        while attempts < 10:
+        while attempts < timeout:
             if self.is_alive(ip):
                 return True
             attempts += 1

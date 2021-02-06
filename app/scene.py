@@ -1,263 +1,182 @@
+import os
+import traceback
+from time import sleep
 from lib.animations import NewKITT, RainbowCycle, shutdown as shutdownPixels
-from lib.devices import Sonoff
+from lib.devices import Sonoff as Switch
 from lib.network_scanner import NetworkScanner
-from lib.pyledshop import WifiLedShopLight
-from lib.threading import Thread
+from lib.pyledshop import WifiLedShopLight as LedController
 from lib.utils import evaluate_day_night
 from optparse import OptionParser
 from subprocess import Popen as call_process, PIPE
 from sys import argv
 
-simulate_allowed=False
-try:
-    import neopixel
-except:
-    import lib.neopixel.neopixel as neopixel
-    simulate_allowed=True
-    pass
 
-try:
-    import board
-except:
-    import lib.neopixel.board as board
-    pass
+class RootService:
+    def __init__(self, quiet=False):
+        self.main_host = "192.168.1.13"
+        self.controller_host = "192.168.1.203"
+        self.switch_host = "192.168.1.153"
+        self.mqtt_broker = "192.168.1.20"
 
-import time
-import traceback
-import os
+        self.__log(f'Main Host:       {self.main_host}')
+        self.__log(f'Controller Host: {self.controller_host}')
+        self.__log(f'Switch Host:     {self.switch_host}')
+        self.__log(f'Switch Broker:   {self.mqtt_broker}')
 
-parser = OptionParser()
-parser.add_option("--off", action="store_true", dest="terminate", default=False)
-parser.add_option("-q", "--quiet", action="store_false", dest="simulate", default=True)
-(options, _) = parser.parse_args()
+        self.__scanner = NetworkScanner(ips=[
+            self.main_host,
+            self.controller_host,
+            self.switch_host,
+            self.mqtt_broker
+        ])
 
+        self.__start_at = '17:30:00'
+        self.__end_at = '06:30:00'
+        self.__date_fmt = '%Y/%m/%d '
+        self.__time_fmt = '%H:%M:%S'
+        self.running = False
 
-def log(a, sep=' => ', flush=True, end="\n"):
-    print(__name__, a, sep=sep, flush=flush, end=end)
+        self.switch = None
+        self.controller = None
 
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
-ips = {
-    'main_host': "192.168.1.13",
-    'controller_host': "192.168.1.203",
-    'sonoff_host': "192.168.1.153",
-    'sonoff_broker': "localhost",
-    # 'sonoff_broker': "192.168.1.20",
-}
+    def __is_night(self):
+        return evaluate_day_night(self.__start_at, self.__end_at, self.__date_fmt, self.__time_fmt)
 
-log(ips)
-scanner = NetworkScanner(ips=list(ips.values()))
-is_alive = False
-last_ping = False
-start_at = '17:30:00'
-end_at = '06:30:00'
-date_fmt = '%Y/%m/%d '
-time_fmt = '%H:%M:%S'
+    def run(self):
+        self.running = True
+        while True:
+            # Manual control
+            if self.running == False:
+                return
 
-log(f'Detecting Broker in {ips["sonoff_broker"]}...')
-scanner.wait_host(ips["sonoff_broker"])
-log(f'Broker detected!')
-log(f'Detecting Sonoff in {ips["sonoff_host"]}...')
-scanner.wait_host(ips["sonoff_host"])
-log(f'Sonoff detected!')
+            night_mode = self.__is_night()
+            alive = self.__scanner.is_alive(self.main_host)
 
-sonoff = Sonoff(broker=ips["sonoff_broker"], device="desktop")
-controller = None
-pixels = None
-fan_thread = None
-night_mode = False
+            if self.wait_switch():
+                if alive:
+                    if not self.switch.on:
+                        self.__log("Turning on switch")
+                    self.switch.turn_on()
 
+                    if self.wait_controller():
+                        self.controller.set_segments(1)
+                        self.controller.set_lights_per_segment(144)
 
-def turn_on_screen(on):
-    path = '/sys/class/backlight/rpi_backlight/brightness'
-    if os.path.exists(path):
-        try:
-            brightness = 64 if on == True else 1
-            call_process(
-                f'echo {brightness} > {path}', shell=True, stdout=PIPE).wait()
-        except:
-            traceback.print_exc()
-            pass
+                        if night_mode:
+                            if self.controller.state.mode != 0:
+                                self.__log('Activating night mode!')
+                                self.controller.set_preset(0)
+                        else:
+                            if self.controller.state.mode != 219:
+                                self.__log('Activating day mode!')
+                                self.controller.set_custom(1)
 
-
-def pixels_animation():
-    global scanner
-    global night_mode
-    global ips
-    global pixels
-    while True:
-        if scanner.is_alive(ips["main_host"]):
-            turn_on_screen(True)
-            if pixels is not None:
-                if night_mode:
-                    RainbowCycle(pixels, 0.001, 1)
+                        if not self.controller.state.is_on:
+                            self.__log("Turning on controller")
+                        self.controller.turn_on()
                 else:
-                    NewKITT(pixels, 255, 0, 0, 1, 0.075, 0, 1)
-        else:
-            turn_on_screen(False)
-            if pixels is not None:
-                pixels.fill((0, 0, 0))
-                pixels.show()
-        time.sleep(0.01)
+                    if self.switch.on:
+                        self.__log("Turning off switch")
+                    self.switch.turn_off()
+            sleep(1)
 
+    def __wait_host(self, ip, timeout=10):
+        return self.__scanner.wait_host(ip, timeout)
 
-def start_fan_threads():
-    global fan_thread
-    if fan_thread is None:
-        fan_thread = Thread(target=pixels_animation, args=[], daemon=True)
-        fan_thread.start()
+    def wait_broker(self):
+        if not self.__wait_host(self.mqtt_broker):
+            self.__log(
+                'MQTT broker could not be found in {self.mqtt_broker}...')
+            self.controller = None
+            self.switch = None
+            self.broker = None
+            return False
+        return True
 
+    def wait_switch(self):
+        # MQTT broker available
+        if self.wait_broker():
+            # Detecting switch
+            if self.switch is None:
+                self.__log(f'Detecting switch in {self.switch_host}...')
+                if self.__wait_host(self.switch_host):
+                    self.switch = Switch(
+                        broker=self.mqtt_broker, device="desktop")
 
-def stop_fan_threads():
-    global fan_thread
-    while fan_thread is not None:
-        try:
-            if fan_thread.is_alive():
-                fan_thread.kill()
-            fan_thread = None
-        except Exception as e:
-            log(e)
-            pass
-        time.sleep(0.1)
-
-
-def load_pixels():
-    global pixels
-    global fan_thread
-    global simulate_allowed
-    global options
-    while pixels is None:
-        try:
-            placeholder = None
-            if simulate_allowed == True:
-                placeholder = neopixel.NeoPixel(
-                    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB, simulate=options.simulate)
-            else:
-                placeholder = neopixel.NeoPixel(
-                    board.D18, 11, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
-            pixels = placeholder
-        except:
-            traceback.print_exc()
-            pixels = None
-            pass
-        time.sleep(0.1)
-
-    start_fan_threads()
-
-
-def unload_pixels():
-    stop_fan_threads()
-    global pixels
-    while pixels is not None:
-        try:
-            shutdownPixels(pixels)
-            pixels.deinit()
-            pixels = None
-        except Exception as e:
-            log(e)
-            pass
-        time.sleep(0.1)
-    pixels = None
-
-
-def shutdown():
-    global controller
-    global scanner
-    global sonoff
-    print(f'\n{__name__}', 'Exiting...', sep=' => ')
-    unload_pixels()
-    attempts = 0
-    while not sonoff.connected:
-        if attempts < 10:
-            attempts += 1
-            time.sleep(1)
-
-    if sonoff.connected:
-        print(".")
-        if sonoff.on:
-            if controller is None:
-                log(f'Detecting controller in {ips["controller_host"]}...')
-                if scanner.wait_host(ips["controller_host"]):
-                    log(f'Controller detected!')
-                    controller = WifiLedShopLight(ips["controller_host"])
-                    controller.sync_state()
-
-            if controller is not None:
-                if controller.state.is_on:
-                    log("Turning off controller")
-                    controller.turn_off()
-
+            # Connecting switch
             attempts = 0
-            log("Turning off Sonoff device")
-            sonoff.turn_off()
+            while attempts < 5:
+                if self.switch.connected:
+                    return True
+                attempts += 1
+                sleep(1)
 
-    scanner.stop()
+        self.__log('Switch could not be found in {self.switch_host}')
+        self.switch = None
+        self.broker = None
+        return False
+
+    def wait_controller(self):
+        # Switch available
+        if self.wait_switch():
+            if self.controller is not None:
+                # Switch and controller available
+                return True
+
+            # Detecting controller
+            self.__log(f'Detecting controller in {self.controller_host}...')
+            if self.__wait_host(self.controller_host):
+                self.__log(f'Controller detected!')
+                self.controller = LedController(self.controller_host)
+                self.controller.sync_state()
+                return True
+
+        # Switch not available supposes controller is also unavailable
+        self.controller = None
+        self.__log('Controller could not be found!')
+        return False
+
+    def stop(self):
+        print('', flush=True)
+        self.__log('Exiting...')
+        self.running = False
+
+        self.__log("Turning off controller")
+        try:
+            if self.wait_controller() and self.controller.state.is_on:
+                self.controller.turn_off()
+        except:
+            pass
+
+        self.__log("Turning off switch")
+        try:
+            if self.wait_switch() and self.switch.on:
+                self.switch.turn_off()
+        except:
+            pass
+
+        self.__scanner.stop()
 
 
 if __name__ == '__main__':
+    parser = OptionParser()
+    parser.add_option("--off", action="store_true",
+                      dest="terminate", default=False)
+    parser.add_option("-q", "--quiet", action="store_true",
+                      dest="quiet", default=False)
+    (options, _) = parser.parse_args()
+
+    main = RootService(quiet=options.quiet)
     try:
-        if options.terminate == True:
-            shutdown()
+        if options.terminate == False:
+            main.run()
         else:
-            load_pixels()
-            while True:
-                preset = None
-                speed = None
-                night_mode = evaluate_day_night(
-                    start_at, end_at, date_fmt, time_fmt)
-
-                if sonoff.connected:
-                    if scanner.is_alive(ips["main_host"]):
-                        if not sonoff.on:
-                            if controller is not None:
-                                try:
-                                    controller.close()
-                                except:
-                                    traceback.print_exc()
-                                    pass
-                            controller = None
-                            log("Turning on Sonoff device")
-                            sonoff.turn_on()
-
-                        if controller is None:
-                            log(
-                                f'Detecting controller in {ips["controller_host"]}...')
-                            scanner.wait_host(ips["controller_host"])
-                            log('Controller detected!')
-                            controller = WifiLedShopLight(
-                                ips["controller_host"])
-                            controller.sync_state()
-                            controller.set_segments(1)
-                            controller.set_lights_per_segment(144)
-
-                        if night_mode:
-                            if controller.state.mode != 0:
-                                log('Activating night mode!')
-                                controller.set_preset(0)
-                        else:
-                            if controller.state.mode != 219:
-                                log('Activating day mode!')
-                                controller.set_custom(1)
-
-                        if not controller.state.is_on:
-                            log("Turning on controller")
-                        controller.turn_on()
-
-                    else:
-                        if sonoff.on:
-                            log("Turning off Sonoff device")
-                        sonoff.turn_off()
-                else:
-                    if controller is not None:
-                        try:
-                            controller.close()
-                        except:
-                            traceback.print_exc()
-                            pass
-                        controller = None
-
-                time.sleep(1)
+            raise Exception()
     except:
         pass
     finally:
-        shutdown()
+        main.stop()
         pass
