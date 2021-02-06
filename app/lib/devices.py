@@ -65,13 +65,14 @@ class Fan:
             time.sleep(0.1)
 
     def start(self):
+        # Init led strip
+        self.init_pixels()
+
         self.__scanner = NetworkScanner(ips=self.__ips)
 
         # Stop thread if is running
         if self.__thread is not None:
             self.stop()
-
-        # Init led strip
 
         # Start thread
         self.on = True
