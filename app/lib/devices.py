@@ -47,14 +47,7 @@ class Fan:
     def __log(self, a, sep=' => ', flush=True, end="\n"):
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
-    def start(self):
-        self.__scanner = NetworkScanner(ips=self.__ips)
-
-        # Stop thread if is running
-        if self.__thread is not None:
-            self.stop()
-
-        # Init led strip
+    def init_pixels(self):
         while self.__pixels is None:
             try:
                 placeholder = None
@@ -71,6 +64,15 @@ class Fan:
                 pass
             time.sleep(0.1)
 
+    def start(self):
+        self.__scanner = NetworkScanner(ips=self.__ips)
+
+        # Stop thread if is running
+        if self.__thread is not None:
+            self.stop()
+
+        # Init led strip
+
         # Start thread
         self.on = True
         self.__thread = Thread(target=self.__animate, args=[], daemon=True)
@@ -84,6 +86,7 @@ class Fan:
             self.__thread = None
 
         # Stop led strip
+        self.init_pixels()
         while self.__pixels is not None:
             try:
                 shutdownPixels(self.__pixels)
