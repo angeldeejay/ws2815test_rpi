@@ -6,11 +6,11 @@ After=multi-user.target
 Type=idle
 Restart=always
 RestartSec=1
-# KillMode=process
+Environment=SERVICE_ROOT=
 StartLimitInterval=0
 StartLimitBurst=120
-ExecStart=/usr/bin/env python3 -u /home/pi/ws2815test_rpi/app/fan.py -q
-ExecStopPost=-/usr/bin/env python3 -u /home/pi/ws2815test_rpi/app/fan.py --off -q
+ExecStart=/usr/bin/env python3 -u ${SERVICE_ROOT}/app/fan.py -q
+ExecStopPost=-/usr/bin/env python3 -u ${SERVICE_ROOT}/app/fan.py --off -q
 TimeoutStopSec=120
 
 [Install]

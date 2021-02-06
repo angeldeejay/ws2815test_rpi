@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+SUDO=''
+if (( $EUID != 0 )); then
+    SUDO='sudo'
+fi
+SCRIPTPATH="$(cd "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
+echo $SCRIPTPATH;
+
+$SUDO pip3 install -r $SCRIPTPATH/requirements.txt
+$SUDO python3 -m pip install --force-reinstall adafruit-blinka
+for serviceFile in $(ls -1 $SCRIPTPATH/services/*.service); do
+    targetFile="/lib/systemd/system/$(basename $serviceFile)"
+    $SUDO rm -f $targetFile || true
+    sed "s:^\(.\+SERVICE_ROOT=\):\1${SCRIPTPATH}:" $serviceFile | $SUDO tee $targetFile > /dev/null 2>&1
+    $SUDO systemctl daemon-reload
+done

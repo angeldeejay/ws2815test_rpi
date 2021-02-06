@@ -1,8 +1,10 @@
-import time
+from colors import color as colorize
+from lib.threading import Thread
+import traceback
+import copy
 import math
 import sys
-from lib.threading import Thread
-from colors import color as colorize
+import time
 
 # Pixel color order constants
 RGB = "RGB"
@@ -46,7 +48,14 @@ class NeoPixel(list):
             self.__thread = None
 
     def __repr__(self):
-        return "<{0} {1}>".format(self.__class__.__name__, self._data)
+        attributes = {
+            'pixels': self._pixels,
+            'pin': self.pin,
+            'auto_write': self.auto_write,
+            'brightness': self.brightness,
+            'on': self.on,
+        }
+        return f'@{self.__class__.__name__}{attributes}'
 
     def __len__(self):
         return len(self._data)
@@ -87,13 +96,15 @@ class NeoPixel(list):
                     break
                 try:
                     output = ''.join([colorize('█', (r, g, b), None)
-                                    for r, g, b in self._data])
-                    sys.stdout.write(self.__class__.__name__ +
-                                    ' => ' + output + end)
-                    sys.stdout.flush()
+                                      for r, g, b in self._data])
+                    self.__log(output, end=end, flush=True)
                 except:
+                    traceback.print_exc()
                     pass
-                time.sleep(0.01)
+                time.sleep(0.0001)
+
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def fill(self, color):
         for pixel in range(self._pixels):

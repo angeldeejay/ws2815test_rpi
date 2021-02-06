@@ -1,14 +1,11 @@
-from lib.animations import NewKITT, RainbowCycle, shutdown as shutdownPixels
+from lib.animations import NewKITT, RainbowCycle, shutdown
 from lib.network_scanner import NetworkScanner
 from lib.threading import Thread
 from lib.utils import evaluate_day_night
 from paho.mqtt import client as mqtt_client
 from rpi_ws281x import PixelStrip, Color
 from subprocess import Popen as call_process, DEVNULL
-import asyncore
-import binascii
 import random
-import socket
 import time
 import traceback
 
@@ -21,6 +18,95 @@ except:
     import lib.neopixel.board as board
     import lib.neopixel.neopixel as neopixel
     pass
+
+
+class LedStrip:
+    def __init__(self, gpio_pin=None, led_count=None, pixel_order=None, quiet=False, animation=None):
+        global hardware_available
+        self.on = False
+        self.gpio_pin = board.Pin(gpio_pin)
+        self.led_count = int(led_count)
+        self.pixel_order = pixel_order
+        self.simulate = not hardware_available
+        self.quiet = quiet
+        self.__speed = self.led_count / 50
+        self.animation = self.set_animation(animation)
+        self.__pixels = None
+        # Start thread
+        self.on = True
+        self.__thread = Thread(target=self.__animate, args=[], daemon=True)
+        self.__thread.start()
+        self.start()
+
+    def __repr__(self):
+        attributes = {
+            'simulate': self.simulate,
+            'quiet': self.quiet,
+            'animation': self.animation,
+            'pixels': self.__pixels,
+            'speed': self.__speed,
+        }
+        return f'@{self.__class__.__name__}{attributes}'
+
+    def __log(self, a, sep=' => ', flush=True, end="\n"):
+        print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
+
+    def set_animation(self, animation):
+        if callable(animation):
+            self.animation = animation
+        else:
+            self.animation = None
+
+    def init_pixels(self):
+        while self.__pixels is None:
+            try:
+                placeholder = None
+                if self.simulate == True:
+                    placeholder = neopixel.NeoPixel(
+                        self.gpio_pin, self.led_count, brightness=1.0, auto_write=False, pixel_order=self.pixel_order, simulate=not self.quiet)
+                else:
+                    placeholder = neopixel.NeoPixel(
+                        self.gpio_pin, self.led_count, brightness=1.0, auto_write=False, pixel_order=self.pixel_order)
+                self.__pixels = placeholder
+                self.__log(f'Initialized LED Strip: {self}')
+            except:
+                traceback.print_exc()
+                self.__pixels = None
+                pass
+            time.sleep(0.1)
+
+    def start(self):
+        # Init led strip
+        self.init_pixels()
+
+    def stop(self):
+        # Stop thread
+        self.on = False
+        if self.__thread is not None:
+            self.__thread.kill()
+            self.__thread = None
+
+        # Stop led strip
+        self.init_pixels()
+        while self.__pixels is not None:
+            try:
+                shutdown(self.__pixels)
+                self.__pixels.deinit()
+                self.__pixels = None
+            except Exception as e:
+                self.__log(e)
+                pass
+            time.sleep(0.1)
+
+    def __animate(self):
+        while True:
+            if not self.on:
+                break
+
+            if callable(self.animation):
+                self.animation(self.__pixels)
+            else:
+                time.sleep(1)
 
 
 class Fan:
@@ -90,7 +176,7 @@ class Fan:
         self.init_pixels()
         while self.__pixels is not None:
             try:
-                shutdownPixels(self.__pixels)
+                shutdown(self.__pixels)
                 self.__pixels.deinit()
                 self.__pixels = None
             except Exception as e:
@@ -102,13 +188,6 @@ class Fan:
             self.__scanner.stop()
             self.__scanner = None
 
-    def turn_screen(self, on):
-        try:
-            call_process(['/usr/bin/vcgencmd', 'display_power',
-                          str(1 if on else 0)], shell=False, stdout=DEVNULL)
-        except:
-            pass
-
     def __animate(self):
         while True:
             if not self.on:
@@ -116,14 +195,19 @@ class Fan:
 
             alive = any(
                 map(lambda ip: self.__scanner.is_alive(ip), self.__ips))
-            self.turn_screen(alive)
 
             if alive:
                 if self.__pixels is not None:
                     if evaluate_day_night(self.__start_at, self.__end_at, self.__date_fmt, self.__time_fmt):
-                        RainbowCycle(self.__pixels, 0.001, 1)
+                        # RainbowCycle(pixels, SpeedDelay, cycles)
+                        RainbowCycle(self.__pixels, 4 / 255, 1)
                     else:
-                        NewKITT(self.__pixels, 255, 0, 0, 1, 0.075, 0, 1)
+                        # NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles)
+                        eye_size = max(1, int(round(self.led_count / 10)))
+                        steps = (self.led_count - eye_size - 2) * 8
+                        speed = 6 / steps
+                        print(speed, flush=True)
+                        NewKITT(self.__pixels, 128, 0, 0, eye_size, speed, 0, 1)
             else:
                 if self.__pixels is not None:
                     self.__pixels.fill((0, 0, 0))
@@ -147,7 +231,6 @@ class Sonoff:
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __on_connect(self, client, userdata, flags, rc):
-        self.__log((client, userdata, flags, rc))
         if rc == 0:
             self.connected = True
             self.__log(f'Connected to {self.broker}:{self.port}')
@@ -198,16 +281,18 @@ class Sonoff:
     def turn_on(self):
         if not self.on:
             self.__log(f'Turning on {self}')
-            while not self.on:
-                self.__publish(f'cmnd/{self.device}/Power', 1)
-                time.sleep(1)
+            # while not self.on:
+            #     self.__publish(f'cmnd/{self.device}/Power', 1)
+            #     time.sleep(1)
+            self.on = True
 
     def turn_off(self):
         if self.on:
             self.__log(f'Turning off {self}')
-            while self.on:
-                self.__publish(f'cmnd/{self.device}/Power', 0)
-                time.sleep(1)
+            # while self.on:
+            #     self.__publish(f'cmnd/{self.device}/Power', 0)
+            #     time.sleep(1)
+            self.on = False
 
     def toggle_off_on(self):
         # self.__publish(f'cmnd/{self.device}/Power', 'TOGGLE')

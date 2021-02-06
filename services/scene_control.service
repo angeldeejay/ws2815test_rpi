@@ -1,0 +1,17 @@
+[Unit]
+Description=Scene Lights Control and Network Monitor
+After=multi-user.target
+
+[Service]
+Type=idle
+Restart=always
+RestartSec=1
+Environment=SERVICE_ROOT=
+StartLimitInterval=0
+StartLimitBurst=120
+ExecStart=/usr/bin/env python3 -u ${SERVICE_ROOT}/app/control.py -q
+ExecStopPost=-/usr/bin/env python3 -u ${SERVICE_ROOT}/app/control.py --off -q
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target
