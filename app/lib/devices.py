@@ -281,17 +281,17 @@ class Sonoff:
     def turn_on(self):
         if not self.on:
             self.__log(f'Turning on {self}')
-            # while not self.on:
-            #     self.__publish(f'cmnd/{self.device}/Power', 1)
-            #     time.sleep(1)
+            while not self.on:
+                self.__publish(f'cmnd/{self.device}/Power', 1)
+                time.sleep(1)
             self.on = True
 
     def turn_off(self):
         if self.on:
             self.__log(f'Turning off {self}')
-            # while self.on:
-            #     self.__publish(f'cmnd/{self.device}/Power', 0)
-            #     time.sleep(1)
+            while self.on:
+                self.__publish(f'cmnd/{self.device}/Power', 0)
+                time.sleep(1)
             self.on = False
 
     def toggle_off_on(self):
