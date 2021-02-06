@@ -9,8 +9,8 @@ RestartSec=1
 Environment=SERVICE_ROOT=
 StartLimitInterval=0
 StartLimitBurst=120
-ExecStart=/usr/bin/env python3 -u ${SERVICE_ROOT}/app/control.py -q
-ExecStopPost=-/usr/bin/env python3 -u ${SERVICE_ROOT}/app/control.py --off -q
+ExecStart=/usr/bin/env python3 -u ${SERVICE_ROOT}/app/scene_control.py -q
+ExecStopPost=-/usr/bin/env python3 -u ${SERVICE_ROOT}/app/scene_control.py --off -q
 TimeoutStopSec=120
 
 [Install]
