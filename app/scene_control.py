@@ -12,7 +12,8 @@ class RootService:
     def __init__(self, quiet=False):
         self.main_host = "192.168.1.13"
         self.switch_host = "192.168.1.153"
-        self.mqtt_broker = "192.168.1.20"
+        # self.mqtt_broker = "192.168.1.20"
+        self.mqtt_broker = "127.0.0.1"
 
         self.__log(f'Main Host:       {self.main_host}')
         self.__log(f'Switch Host:     {self.switch_host}')
