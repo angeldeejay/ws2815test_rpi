@@ -11,12 +11,12 @@ import traceback
 
 hardware_available = False
 try:
-    import board
+    from board import *
     import neopixel
     from microcontroller.pin import Pin
     hardware_available = True
 except:
-    from lib.neopixel.microcontroller.pin import *
+    from lib.neopixel.microcontroller.pin import Pin
     from lib.neopixel.board import *
     import lib.neopixel.neopixel as neopixel
     pass
