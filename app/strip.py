@@ -44,7 +44,6 @@ class StripService:
             eye_size = max(1, int(round(num_pixels / 10)))
             steps = (num_pixels - eye_size - 2) * 8
             speed = 6 / steps
-            print(speed, flush=True)
             NewKITT(pixels, 128, 0, 0, eye_size, speed, 0, 1)
 
     def run(self):
@@ -63,7 +62,8 @@ class StripService:
         self.running = False
         self.strip.stop()
 
-ALLOWED_PINS= [18, 21]
+
+ALLOWED_PINS = [18, 21]
 
 if __name__ == '__main__':
     parser = OptionParser()
