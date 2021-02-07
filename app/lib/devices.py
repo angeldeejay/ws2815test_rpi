@@ -13,9 +13,11 @@ hardware_available = False
 try:
     import board
     import neopixel
+    from microcontroller.pin import Pin
     hardware_available = True
 except:
-    import lib.neopixel.board as board
+    from lib.neopixel.microcontroller.pin import Pin
+    from lib.neopixel.board import *
     import lib.neopixel.neopixel as neopixel
     pass
 
@@ -24,7 +26,7 @@ class LedStrip:
     def __init__(self, gpio_pin=None, led_count=None, pixel_order=None, quiet=False, animation=None):
         global hardware_available
         self.on = False
-        self.gpio_pin = board.Pin(gpio_pin)
+        self.gpio_pin = Pin(gpio_pin)
         self.led_count = int(led_count)
         self.pixel_order = pixel_order
         self.simulate = not hardware_available
@@ -113,7 +115,7 @@ class Fan:
     def __init__(self, led_count=None, pixel_order=None, ips=None, start_at=None, end_at=None, date_fmt=None, time_fmt=None, quiet=False):
         global hardware_available
         self.on = False
-        self.gpio_pin = board.D18
+        self.gpio_pin = D18
         self.led_count = int(led_count)
         self.__start_at = start_at
         self.__end_at = end_at

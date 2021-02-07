@@ -61,7 +61,9 @@ class StripService:
         print('', flush=True)
         self.__log('Exiting...')
         self.running = False
+        self.strip.stop()
 
+ALLOWED_PINS= [18, 21]
 
 if __name__ == '__main__':
     parser = OptionParser()
@@ -70,15 +72,18 @@ if __name__ == '__main__':
     parser.add_option("-q", "--quiet", action="store_true",
                       dest="quiet", default=False)
     (options, args) = parser.parse_args()
+
     strip_specs = list(map(lambda x: int(x), args.pop(0).split('-')))
+    if strip_specs[0] not in ALLOWED_PINS:
+        raise Exception(f'Invalid GPIO. Allowed pins: {ALLOWED_PINS}')
 
     main = StripService(quiet=options.quiet,
                         gpio_pin=strip_specs[0], led_count=strip_specs[1])
-    main.run()
     try:
-        # if options.terminate == False:
-        # else:
-        raise Exception()
+        if options.terminate == False:
+            main.run()
+        else:
+            raise Exception()
     except:
         pass
     finally:
