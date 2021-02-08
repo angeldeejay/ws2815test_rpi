@@ -72,9 +72,10 @@ class LedStrip:
     def stop(self):
         self.thread_active = False
         if self.thread is not None:
-            self.__log("Stopping thread")
-            while self.thread.is_alive():
-                sleep(0.01)
+            try:
+                self.thread.kill()
+            except:
+                pass
 
         try:
             for i in range(0, self.led_count):
@@ -108,9 +109,9 @@ def start_animations(strips, animation_name, animation_fn):
 
 if __name__ == '__main__':
     strips = [
-        LedStrip(name='5050 - Red', gpio_pin=18, interval=0.05, led_count=120),
-        LedStrip(name='5050 - Blue', gpio_pin=13,
-                 interval=0.05, led_count=60, reverse=True),
+        LedStrip(name='5050 - Red', gpio_pin=18, interval=0.05, led_count=11),
+        LedStrip(name='5050 - Red', gpio_pin=21, interval=0.05, led_count=11),
+        LedStrip(name='5050 - Blue', gpio_pin=13, interval=0.05, led_count=11),
     ]
 
     try:
@@ -120,7 +121,7 @@ if __name__ == '__main__':
         else:
             print("Press Ctrl-C to quit.")
             animations = [
-                ("Randomize", randomize_animation),
+                # ("Randomize", randomize_animation),
                 ("Rainbow",   rainbow_animation),
                 ("Snow",      snow_animation),
                 ("Christmas", christmas_animation),
@@ -130,7 +131,7 @@ if __name__ == '__main__':
             while True:
                 animation_name, animation_fn = animations[animation_index]
                 start_animations(strips, animation_name, animation_fn)
-                sleep(30)
+                sleep(5)
                 stop_animations(strips)
                 animation_index = 0 if animation_index == len(
                     animations) - 1 else (animation_index + 1)

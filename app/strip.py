@@ -20,8 +20,8 @@ class StripService:
         self.__log(f'GPIO: {self.gpio_pin}')
         self.__log(f'LED Count: {self.led_count}')
 
-        self.__start_at = '17:30:00'
-        self.__end_at = '06:30:00'
+        self.__start_at = '17:55:00'
+        self.__end_at = '23:30:00'
         self.__date_fmt = '%Y/%m/%d '
         self.__time_fmt = '%H:%M:%S'
 
@@ -63,7 +63,7 @@ class StripService:
         self.strip.stop()
 
 
-ALLOWED_PINS = [18, 21]
+ALLOWED_PINS = [18, 21, 19, 13]
 
 if __name__ == '__main__':
     parser = OptionParser()

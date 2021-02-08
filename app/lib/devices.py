@@ -12,14 +12,14 @@ import traceback
 hardware_available = False
 try:
     from board import *
-    import neopixel
     from microcontroller.pin import Pin
     hardware_available = True
 except:
     from lib.neopixel.microcontroller.pin import Pin
     from lib.neopixel.board import *
-    import lib.neopixel.neopixel as neopixel
     pass
+
+import lib.neopixel.neopixel as neopixel
 
 
 class LedStrip:
@@ -112,10 +112,10 @@ class LedStrip:
 
 
 class Fan:
-    def __init__(self, led_count=None, pixel_order=None, ips=None, start_at=None, end_at=None, date_fmt=None, time_fmt=None, quiet=False):
+    def __init__(self, gpio_pin=None, led_count=None, pixel_order=None, ips=None, start_at=None, end_at=None, date_fmt=None, time_fmt=None, quiet=False):
         global hardware_available
         self.on = False
-        self.gpio_pin = D18
+        self.gpio_pin = Pin(int(gpio_pin))
         self.led_count = int(led_count)
         self.__start_at = start_at
         self.__end_at = end_at
@@ -208,7 +208,6 @@ class Fan:
                         eye_size = max(1, int(round(self.led_count / 10)))
                         steps = (self.led_count - eye_size - 2) * 8
                         speed = 6 / steps
-                        print(speed, flush=True)
                         NewKITT(self.__pixels, 128, 0, 0, eye_size, speed, 0, 1)
             else:
                 if self.__pixels is not None:

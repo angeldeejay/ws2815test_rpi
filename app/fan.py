@@ -6,8 +6,8 @@ from time import sleep
 class RootService:
     def __init__(self, quiet=False):
         self.__log('Starting fan lights')
-        self.fan = LedStrip(led_count=11, ips=['192.168.1.13', '192.168.1.14'], start_at='17:30:00',
-                            end_at='06:30:00', date_fmt='%Y/%m/%d ', time_fmt='%H:%M:%S', quiet=quiet)
+        self.fan = LedStrip(gpio_pin=13, led_count=11, ips=['192.168.1.13'], start_at='17:55:00',
+                            end_at='23:30:00', date_fmt='%Y/%m/%d ', time_fmt='%H:%M:%S', quiet=quiet)
 
     def __log(self, a, sep=' => ', flush=True, end="\n"):
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)

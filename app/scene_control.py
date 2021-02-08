@@ -25,8 +25,8 @@ class RootService:
             self.mqtt_broker
         ])
 
-        self.__start_at = '17:30:00'
-        self.__end_at = '06:30:00'
+        self.__start_at = '17:55:00'
+        self.__end_at = '23:30:00'
         self.__date_fmt = '%Y/%m/%d '
         self.__time_fmt = '%H:%M:%S'
         self.running = False
