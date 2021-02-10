@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 from time import sleep
-from lib.devices import Sonoff as Switch
+from lib.devices.sonoff import Sonoff as Switch
 from lib.network_scanner import NetworkScanner
 from lib.devices.sp108e import SP108E_Controller as LedController, MonoEffect, PresetEffect, CustomEffect
 from lib.utils import evaluate_day_night
