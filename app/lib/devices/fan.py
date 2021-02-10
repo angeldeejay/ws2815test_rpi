@@ -1,10 +1,10 @@
 from .neopixel import neopixel, Pin, hardware_available
 from ..threading import Thread
 from ..network_scanner import NetworkScanner
-from ..animations import shutdown, RainbowCycle, NewKITT
 from ..utils import evaluate_day_night
 import traceback
 import time
+from ..animations import shutdown, RainbowCycle, NewKITT
 
 
 class Fan:

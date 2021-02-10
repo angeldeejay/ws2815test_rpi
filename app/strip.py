@@ -2,10 +2,10 @@ import os
 import sys
 import traceback
 from time import sleep
-from .lib.animations import NewKITT, RainbowCycle
-from .lib.devices import LedStrip
-from .lib.network_scanner import NetworkScanner
-from .lib.utils import evaluate_day_night
+from lib.animations import NewKITT, RainbowCycle
+from lib.devices.led_strip import LedStrip
+from lib.network_scanner import NetworkScanner
+from lib.utils import evaluate_day_night
 from optparse import OptionParser
 from subprocess import Popen as call_process, PIPE
 

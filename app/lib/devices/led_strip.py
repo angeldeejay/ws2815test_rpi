@@ -63,9 +63,7 @@ class LedStrip:
     def start(self):
         # Init led strip
         self.init_pixels()
-        for i in range(0, self.led_count):
-            self.__pixels[0] = (0, 0, 0)
-        self.__pixels.show()
+        shutdown(self.__pixels)
 
     def stop(self):
         # Stop thread

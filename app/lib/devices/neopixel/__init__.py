@@ -1,6 +1,6 @@
 hardware_available = False
 try:
-    from board import *
+    import board
     from microcontroller.pin import Pin
     from . import hw_neopixel as neopixel
     hardware_available = True

@@ -2,8 +2,7 @@ import time
 import random
 import math
 import serial
-from .utils import *
-from .colors import *
+from .colors import wheel, brightnessRGB, fadeToBlack
 
 
 def ColorAll2Color(pixels, c1, c2):

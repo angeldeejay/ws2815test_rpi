@@ -1,4 +1,4 @@
-from lib.devices import Fan
+from lib.devices.fan import Fan
 from optparse import OptionParser
 from time import sleep
 
