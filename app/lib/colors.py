@@ -1,8 +1,4 @@
-try:
-    import neopixel
-except:
-    import lib.neopixel.neopixel as neopixel
-    pass
+from .devices.neopixel import neopixel
 
 
 def wheel(position, order):

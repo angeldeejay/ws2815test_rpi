@@ -1,4 +1,6 @@
-__pycache__/
-animations/__pycache__/
-lib/__pycache__/
+lib/devices/sp108e/__pycache__
+lib/devices/__pycache__
+lib/devices/neopixel/__pycache__
+lib/devices/neopixel/microcontroller/__pycache__
+lib/__pycache__
 .vscode/

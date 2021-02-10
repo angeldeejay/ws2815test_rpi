@@ -1,12 +1,13 @@
-from lib.devices import Fan as LedStrip
+from lib.devices import Fan
 from optparse import OptionParser
 from time import sleep
 
 
-class RootService:
+
+class FanService:
     def __init__(self, quiet=False):
         self.__log('Starting fan lights')
-        self.fan = LedStrip(gpio_pin=13, led_count=11, ips=['192.168.1.13'], start_at='17:55:00',
+        self.fan = Fan(gpio_pin=13, led_count=11, ips=['192.168.1.13'], start_at='17:55:00',
                             end_at='23:30:00', date_fmt='%Y/%m/%d ', time_fmt='%H:%M:%S', quiet=quiet)
 
     def __log(self, a, sep=' => ', flush=True, end="\n"):
@@ -31,7 +32,7 @@ if __name__ == '__main__':
                       dest="quiet", default=False)
     (options, _) = parser.parse_args()
 
-    main = RootService(quiet=options.quiet)
+    main = FanService(quiet=options.quiet)
     try:
         if options.terminate == False:
             main.run()

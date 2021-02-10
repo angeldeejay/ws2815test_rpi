@@ -2,8 +2,8 @@ import time
 import random
 import math
 import serial
-from lib.utils import *
-from lib.colors import *
+from .utils import *
+from .colors import *
 
 
 def ColorAll2Color(pixels, c1, c2):
@@ -189,7 +189,7 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
         time.sleep(.050)
 
 
-def Rotate(delay, cycles):
+def Rotate(pixels, delay, cycles):
     num_pixels = pixels._pixels
     # gather existing colors in strip of pixel
     strip = []
@@ -548,13 +548,13 @@ def MeteorRain(pixels, red, green, blue, meteorSize, meteorTrailDecay, meteorRan
             # fade brightness all LEDs one step
             for j in range(num_pixels):
                 if (not meteorRandomDecay) or (random.randint(0, 10) > 5):
-                    pixels[ledNo] = fadeToBlack(
-                        pixels[ledNo], j, meteorTrailDecay)
+                    pixels[j] = fadeToBlack(
+                        pixels[j], j, meteorTrailDecay)
 
             # draw meteor
-            for j in range(meteorSize):
-                if (i - j < num_pixels) and (i - j >= 0):
-                    pixels[i - j] = (red, green, blue)
+            for k in range(meteorSize):
+                if (i - k < num_pixels) and (i - j >= 0):
+                    pixels[i - k] = (red, green, blue)
 
             pixels.show()
             time.sleep(SpeedDelay)

@@ -1,4 +1,4 @@
-from lib.neopixel.pin import Pin
+from .microcontroller import Pin
 
 # Pi 1B rev1 only?
 D0 = Pin(0)

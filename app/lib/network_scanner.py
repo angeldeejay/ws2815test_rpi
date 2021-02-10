@@ -9,7 +9,7 @@ import inspect
 import queue
 import traceback
 from subprocess import Popen as call_process, PIPE
-from lib.threading import Thread
+from .threading import Thread
 
 
 class NetworkScanner:
