@@ -29,9 +29,6 @@ class State:
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def update_from_sync(self, sync_data):
-        # [  0,   1,   2,   3,   4,      5,     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,    16]
-        # [0:2, 2:4, 4:6, 6:8, 8:10, 10:12, 12:14, 14:16, 16:18, 18:20, 20:22, 22:24, 24:26, 26:28, 28:30, 30:32, 32:34]
-        # [ 56,   1, 219, 211,  255,     2,     0,   142,     0,     1,   255,   255,   255,     3,     1,   254,   131]
         self.is_on = sync_data[StatePosition.IS_ON] == 1
         self.chip_type = ChipType.cast(sync_data[StatePosition.CHIP_TYPE])
         self.leds_per_segment = (sync_data[StatePosition.LEDS_PER_SEGMENT_A] * 256) + \

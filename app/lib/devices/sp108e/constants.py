@@ -2,6 +2,9 @@ from enum import IntEnum
 
 
 class ConstantEnum(IntEnum):
+    """
+    Constant Enum super class
+    """
     @classmethod
     def is_member(cls, value: int):
         return value in cls.__members__.items()
@@ -45,6 +48,9 @@ class CommandFlag(ConstantEnum):
 
 
 class Effect(ConstantEnum):
+    """
+    Effects super class
+    """
     @classmethod
     def get_effect(cls, effect: int):
         for derived in Effect.__subclasses__():
@@ -285,6 +291,9 @@ class CustomEffect(Effect):
 
 
 class ColorOrder(ConstantEnum):
+    """
+    Sets the color order
+    """
     RGB = 0
     RBG = 1
     GRB = 2
@@ -294,6 +303,9 @@ class ColorOrder(ConstantEnum):
 
 
 class ChipType(ConstantEnum):
+    """
+    Sets the chip type of the lights
+    """
     SM16703 = 0
     TM1804 = 1
     UCS1903 = 2
