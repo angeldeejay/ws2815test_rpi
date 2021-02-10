@@ -2,10 +2,7 @@ from .constants import Effect, PresetEffect, ColorOrder, Command, CommandFlag, S
 from lib.threading import Thread
 from lib.utils import clamp
 import asyncore
-import binascii
-import errno
 import socket
-import sys
 import time
 import traceback
 
