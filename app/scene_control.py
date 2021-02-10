@@ -168,5 +168,5 @@ if __name__ == '__main__':
         traceback.print_exc()
         pass
     finally:
-        # main.stop()
+        main.stop()
         pass
