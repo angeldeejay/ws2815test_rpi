@@ -7,7 +7,7 @@ class ConstantEnum(IntEnum):
     """
     @classmethod
     def is_member(cls, value: int):
-        return value in cls.__members__.items()
+        return value in cls.__members__.values()
 
     @classmethod
     def cast(cls, value: int):
@@ -64,7 +64,7 @@ class Effect(ConstantEnum):
     def get_command(cls, effect: int):
         for derived in Effect.__subclasses__():
             if derived.is_member(effect):
-                return cls.SET_CUSTOM if derived.__name__ == 'CustomEffect' else cls.SET_PRESET
+                return Command.SET_CUSTOM if derived.__name__ == 'CustomEffect' else Command.SET_PRESET
 
         raise Exception(f'Invalid effect {effect}')
 

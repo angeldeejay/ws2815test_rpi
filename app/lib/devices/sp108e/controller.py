@@ -160,7 +160,6 @@ class SP108E_Controller:
                     preset_value -= CUSTOM_EFFECTS_OFFSET
                 self.send_command(preset_cmd, [preset_value])
                 self.__log('Preset setted to %s' % Effect.get_effect(preset))
-                self.state.mode == int(preset)
                 self.state.preset == preset
             except:
                 self.__err()

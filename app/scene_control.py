@@ -136,7 +136,7 @@ class SceneControlService:
                             self.controller.set_brightness(128)
                         else:
                             preset = CustomEffect.CUSTOM_1
-                            self.controller.set_brightness(64)
+                            self.controller.set_brightness(32)
 
                         if self.controller.state.preset != preset:
                             self.controller.set_preset(preset)
