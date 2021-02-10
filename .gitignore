@@ -1,6 +1,6 @@
-lib/devices/sp108e/__pycache__
-lib/devices/__pycache__
-lib/devices/neopixel/__pycache__
-lib/devices/neopixel/microcontroller/__pycache__
-lib/__pycache__
+app/lib/devices/sp108e/__pycache__
+app/lib/devices/__pycache__
+app/lib/devices/neopixel/__pycache__
+app/lib/devices/neopixel/microcontroller/__pycache__
+app/lib/__pycache__
 .vscode/
