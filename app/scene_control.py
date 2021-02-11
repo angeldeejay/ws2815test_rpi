@@ -133,7 +133,7 @@ class SceneControlService:
                         # Setting animation
                         if night_mode:
                             preset = PresetEffect.RAINBOW
-                            self.controller.set_brightness(128)
+                            self.controller.set_brightness(255)
                         else:
                             preset = CustomEffect.CUSTOM_1
                             self.controller.set_brightness(32)
