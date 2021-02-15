@@ -5,30 +5,33 @@ import serial
 from .colors import wheel, brightnessRGB, fadeToBlack
 
 
-def ColorAll2Color(pixels, c1, c2):
+def default_write_fn(data):
+    pass
+
+
+def ColorAll2Color(num_pixels, c1, c2, write_fn=default_write_fn):
     # ColorAll2Color allows two alternating colors to be shown
-    num_pixels = pixels._pixels
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(num_pixels):
-        if(i % 2 == 0):  # even
-            pixels[i] = c1
-        else:  # odd
-            pixels[i] = c2
-    pixels.show()
+        pixels[i] = c1 if(i % 2 == 0) else c2
+    if callable(write_fn):
+        write_fn(pixels)
 
 
-def ColorAllColorGroup(pixels, colorObject):
+def ColorAllColorGroup(num_pixels, colorObject, write_fn=default_write_fn):
     # ColorAllColorGroup(colorObject) allows colors to be
     # - colorObject: list of color objects. example ((255, 0, 0), (0, 255, 0))
-    num_pixels = pixels._pixels
+    pixels = [(0, 0, 0)]*num_pixels
     colorCount = len(colorObject)
     for i in range(num_pixels):
         colorIndex = i % colorCount
         pixels[i] = colorObject[colorIndex]
-    pixels.show()
+    if callable(write_fn):
+        write_fn(pixels)
 
 
-def CandyCaneCustom(pixels, c1, c2, thisbright, size, delay, cycles):
-    num_pixels = pixels._pixels
+def CandyCaneCustom(num_pixels, c1, c2, thisbright, size, delay, cycles, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     N3 = int(num_pixels / size)
     N6 = int(num_pixels / (size*2))
     N12 = int(num_pixels / (size*4))
@@ -53,12 +56,13 @@ def CandyCaneCustom(pixels, c1, c2, thisbright, size, delay, cycles):
                 c1[0], c1[1], c1[2], int(thisbright*.75))
             pixels[j5] = brightnessRGB(c2[0], c2[1], c2[2], thisbright)
             # show pixel values
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(delay)
 
 
-def RunningLights(pixels, WaveDelay, cycles):
-    num_pixels = pixels._pixels
+def RunningLights(num_pixels, WaveDelay, cycles, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     # gather existing colors in strip of pixel
     strip = []
     for i in range(num_pixels):
@@ -73,33 +77,32 @@ def RunningLights(pixels, WaveDelay, cycles):
             g = (level / 255)*strip[i][1]
             b = (level / 255)*strip[i][2]
             pixels[i] = (int(r), int(g), int(b))
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(WaveDelay)
 
 
-def SnowSparkle(pixels, Count, SparkleDelay, SpeedDelay):
-    num_pixels = pixels._pixels
+def SnowSparkle(num_pixels, Count, SparkleDelay, SpeedDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     # gather existing colors in strip of pixel
-    strip = []
-    for i in range(num_pixels):
-        strip.append(pixels[i])
+    strip = pixels
     for i in range(Count):
         index = random.randint(0, num_pixels - 1)
         pixels[index] = (255, 255, 255)
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SparkleDelay)
         pixels[index] = strip[index]
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
 
-def HalloweenEyes(pixels, red, green, blue, EyeWidth, EyeSpace, Fade, Steps, FadeDelay, EndPause, cycles):
-    num_pixels = pixels._pixels
+def HalloweenEyes(num_pixels, red, green, blue, EyeWidth, EyeSpace, Fade, Steps, FadeDelay, EndPause, cycles, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for c in range(cycles):
         # gather existing colors in strip of pixel
-        strip = []
-        for i in range(num_pixels):
-            strip.append(pixels[i])
+        strip = pixels
         # define eye1 and eye2 location
         StartPoint = random.randint(0, num_pixels - (2*EyeWidth) - EyeSpace)
         Start2ndEye = StartPoint + EyeWidth + EyeSpace
@@ -107,7 +110,8 @@ def HalloweenEyes(pixels, red, green, blue, EyeWidth, EyeSpace, Fade, Steps, Fad
         for i in range(EyeWidth):
             pixels[StartPoint + i] = (red, green, blue)
             pixels[Start2ndEye + i] = (red, green, blue)
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         # if user wants fading, then fadeout pixel color
         if Fade == True:
             for j in range(Steps, - 1, - 1):
@@ -117,19 +121,21 @@ def HalloweenEyes(pixels, red, green, blue, EyeWidth, EyeSpace, Fade, Steps, Fad
                 for i in range(EyeWidth):
                     pixels[StartPoint + i] = ((int(r), int(g), int(b)))
                     pixels[Start2ndEye + i] = ((int(r), int(g), int(b)))
-                pixels.show()
+                if callable(write_fn):
+                    write_fn(pixels)
                 time.sleep(FadeDelay)
         # Set all pixels to back
         # set color of eyes for given location
         for i in range(EyeWidth):
             pixels[StartPoint + i] = strip[StartPoint + i]
             pixels[Start2ndEye + i] = strip[Start2ndEye + i]
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         # pause before changing eye location
         time.sleep(EndPause)
 
 
-def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay, beat2Step, beat2FadeInDelay, beat2FadeOutDelay, beat2Delay, cycles):
+def HeartBeat(num_pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay, beat2Step, beat2FadeInDelay, beat2FadeOutDelay, beat2Delay, cycles, write_fn=default_write_fn):
     # HeartBeat - mimics a heart beat pulse, with 2 beats at different speeds. The existing colors
     # on the pixel strip are preserved, rather than a single color.
     #
@@ -146,11 +152,9 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
     #   beat2FadeOutDelay: (0 - 2147483647) second beat fade out trasition speed, in seconds
     #   beat1Delay: (0 - 2147483647)  beat time delay bewteen sencond and first beat, in seconds
     #   cycles: (1 - 2147483647) number of times this effect will run
-    num_pixels = pixels._pixels
+    pixels = [(0, 0, 0)]*num_pixels
     # gather existing colors in strip of pixel
-    strip = []
-    for i in range(num_pixels):
-        strip.append(pixels[i])
+    strip = pixels
     for loop in range(cycles):
         for ii in range(1, 252, beat1Step):  # for (ii = 1 ; ii <252 ; ii = ii = ii + x)
             for index in range(num_pixels):
@@ -158,7 +162,8 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(beat1FadeInDelay)
         for ii in range(252, 3, - beat1Step):  # for (int ii = 252 ; ii > 3 ; ii = ii - x){
             for index in range(num_pixels):
@@ -166,7 +171,8 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(beat1FadeOutDelay)
         time.sleep(beat1Delay)
         for ii in range(1, 252, beat1Step):  # for (int ii = 1 ; ii <255 ; ii = ii = ii + y){
@@ -175,7 +181,8 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(beat2FadeInDelay)
         for ii in range(252, 3, - beat1Step):  # for (int ii = 255 ; ii > 1 ; ii = ii - y){
             for index in range(num_pixels):
@@ -183,17 +190,16 @@ def HeartBeat(pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1Delay
                 g = strip[index][1]
                 b = strip[index][2]
                 pixels[index] = brightnessRGB(r, g, b, ii)
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(beat2FadeOutDelay)
         time.sleep(.050)
 
 
-def Rotate(pixels, delay, cycles):
-    num_pixels = pixels._pixels
+def Rotate(num_pixels, delay, cycles, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     # gather existing colors in strip of pixel
-    strip = []
-    for i in range(num_pixels):
-        strip.append(pixels[i])
+    strip = pixels
     for loop in range(cycles):
         pixels[0] = pixels[num_pixels - 1]
         # rotate pixel positon
@@ -201,52 +207,56 @@ def Rotate(pixels, delay, cycles):
             pixels[i] = pixels[i - 1]
         # there is an issue with first 2 pixels are same color
         #pixels[0] = (0, 0, 0)
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(delay)
 
 
-def CylonBounce(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles):
+def CylonBounce(num_pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(cycles):
-        num_pixels = pixels._pixels
+        pixels = [(0, 0, 0)]*num_pixels
         for i in range(num_pixels - EyeSize - 1):
-            pixels.fill((0, 0, 0))
+            pixels = [(0, 0, 0)]*num_pixels
             pixels[i] = (int(red / 10), int(green / 10), int(blue / 10))
             for j in range(1, EyeSize + 1):
                 pixels[i + j] = (red, green, blue)
             pixels[i + EyeSize + 1] = (int(red / 10),
                                        int(green / 10), int(blue / 10))
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(SpeedDelay)
         time.sleep(ReturnDelay)
 
         for i in range(num_pixels - EyeSize - 2, - 1, - 1):
-            pixels.fill((0, 0, 0))
+            pixels = [(0, 0, 0)]*num_pixels
             pixels[i] = (int(red / 10), int(green / 10), int(blue / 10))
             for j in range(1, EyeSize + 1):
                 pixels[i + j] = (red, green, blue)
             pixels[i + EyeSize + 1] = (int(red / 10),
                                        int(green / 10), int(blue / 10))
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(SpeedDelay)
         time.sleep(ReturnDelay)
 
 
-def RainbowCycle(pixels, SpeedDelay, cycles):
+def RainbowCycle(num_pixels, SpeedDelay, cycles, write_fn=default_write_fn):
     # RainbowCycle: rotate colors using rainbow scheme.
     #
     #   SpeedDelay: (0 - ...) slow down the effect by injecting a delay in Sec. 0=no delay, .05=50msec, 2=2sec
-    num_pixels = pixels._pixels
-    order = pixels._byteorder_string
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(cycles):
         for j in range(255):
             for i in range(num_pixels):
                 pixel_index = (i * 256 // num_pixels) + j
-                pixels[i] = wheel(pixel_index & 255, order)
-            pixels.show()
+                pixels[i] = wheel(pixel_index & 255)
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(SpeedDelay)
 
 
-def FireCustom(pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles):
+def FireCustom(num_pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles, write_fn=default_write_fn):
     # FireCustom: makes the strand of pixels show an effect that looks flame. This effect also
     # adds more detail control of "sparks" that inject "heat" to the effect, thus changing color
     # and flame length. The spark position can also be controled via start and end range.
@@ -263,11 +273,9 @@ def FireCustom(pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRan
     #  - add choice for 3 diffrent fire effect logic.
     #  - add choice to control heat values "random.randint(160, 255)"
     #  - add choice for flame color options include red, green, and blue.
-    num_pixels = pixels._pixels
     # intialize heat array, same size of as the strip of pixels
-    heat = []
-    for i in range(num_pixels):
-        heat.append(0)
+    pixels = [(0, 0, 0)]*num_pixels
+    heat = [0]*num_pixels
     #
     for loop in range(cycles):
         cooldown = 0
@@ -300,11 +308,12 @@ def FireCustom(pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRan
                 pixels[j] = (255, int(heatramp), 0)
             else:  # coolest
                 pixels[j] = (int(heatramp), 0, 0)
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
 
-def FireCustomMirror(pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles):
+def FireCustomMirror(num_pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles, write_fn=default_write_fn):
     # FireCustomMirror: makes the strand of pixels show an effect that looks flame. This is simular to FireCustom,
     # however it mirrors the effect on top and bottom  (rather than using just from bottom). The intent is to
     # have a fire effect that could be used 144 pixel strip for a lanyard id.
@@ -320,12 +329,10 @@ def FireCustomMirror(pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, Spark
     #  - add choice for 3 diffrent fire effect logic.
     #  - add choice to control heat values "random.randint(160, 255)"
     #  - add choice for flame color options include red, green, and blue.
-    num_pixels = pixels._pixels
-    # intialize heat array, same size of as the strip of pixels
-    heat = []
+    # initialize heat array, same size of as the strip of pixels
+    pixels = [(0, 0, 0)]*num_pixels
     halfNumPixel = int(num_pixels / 2)  # note that this will round down
-    for i in range(halfNumPixel):
-        heat.append(0)
+    heat = [0]*halfNumPixel
     #
     for loop in range(cycles):
         cooldown = 0
@@ -360,12 +367,13 @@ def FireCustomMirror(pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, Spark
                 colortemp = (int(heatramp), 0, 0)
             pixels[j] = colortemp
             pixels[num_pixels - 1 - j] = colortemp
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
 
-def TheaterChaseCustom(pixels, colorobj, darkspace, cycles, SpeedDelay):
-    num_pixels = pixels._pixels
+def TheaterChaseCustom(num_pixels, colorobj, darkspace, cycles, SpeedDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     colorCount = len(colorobj)
     n = colorCount + darkspace
     for j in range(cycles):
@@ -374,35 +382,40 @@ def TheaterChaseCustom(pixels, colorobj, darkspace, cycles, SpeedDelay):
                 for index in range(0, colorCount, 1):
                     if i + q + index < num_pixels:
                         pixels[i + q + index] = colorobj[index]
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(SpeedDelay)
-            pixels.fill((0, 0, 0))
+            pixels = [(0, 0, 0)]*num_pixels
             for i in range(0, num_pixels, n):
                 for index in range(0, colorCount, 1):
                     if i + q + index < num_pixels:
                         pixels[i + q + index] = (0, 0, 0)
 
 
-def NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles):
+def NewKITT(num_pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles, write_fn=default_write_fn):
     for i in range(cycles):
-        RightToLeft(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay)
-        LeftToRight(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay)
-        OutsideToCenter(pixels, red, green, blue,
-                        EyeSize, SpeedDelay, ReturnDelay)
-        CenterToOutside(pixels, red, green, blue,
-                        EyeSize, SpeedDelay, ReturnDelay)
-        LeftToRight(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay)
-        RightToLeft(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay)
-        OutsideToCenter(pixels, red, green, blue,
-                        EyeSize, SpeedDelay, ReturnDelay)
-        CenterToOutside(pixels, red, green, blue,
-                        EyeSize, SpeedDelay, ReturnDelay)
+        RightToLeft(num_pixels, red, green, blue, EyeSize,
+                    SpeedDelay, ReturnDelay, write_fn=write_fn)
+        LeftToRight(num_pixels, red, green, blue, EyeSize,
+                    SpeedDelay, ReturnDelay, write_fn=write_fn)
+        OutsideToCenter(num_pixels, red, green, blue, EyeSize,
+                        SpeedDelay, ReturnDelay, write_fn=write_fn)
+        CenterToOutside(num_pixels, red, green, blue, EyeSize,
+                        SpeedDelay, ReturnDelay, write_fn=write_fn)
+        LeftToRight(num_pixels, red, green, blue, EyeSize,
+                    SpeedDelay, ReturnDelay, write_fn=write_fn)
+        RightToLeft(num_pixels, red, green, blue, EyeSize,
+                    SpeedDelay, ReturnDelay, write_fn=write_fn)
+        OutsideToCenter(num_pixels, red, green, blue, EyeSize,
+                        SpeedDelay, ReturnDelay, write_fn=write_fn)
+        CenterToOutside(num_pixels, red, green, blue, EyeSize,
+                        SpeedDelay, ReturnDelay, write_fn=write_fn)
 
 
-def CenterToOutside(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
-    num_pixels = pixels._pixels
+def CenterToOutside(num_pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(int((num_pixels - EyeSize) / 2), - 1, - 1):
-        pixels.fill((0, 0, 0))
+        pixels = [(0, 0, 0)]*num_pixels
         pixels[i] = (int(red / 10), int(green / 10), int(blue / 10))
 
         for j in range(1, EyeSize + 1):
@@ -418,17 +431,17 @@ def CenterToOutside(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
 
         pixels[num_pixels - i - EyeSize -
                1] = (int(red / 10), int(green / 10), int(blue / 10))
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
     time.sleep(ReturnDelay)
 
 
-def OutsideToCenter(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
-    num_pixels = pixels._pixels
-
+def OutsideToCenter(num_pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(int(((num_pixels - EyeSize) / 2) + 1)):
-        pixels.fill((0, 0, 0))
+        pixels = [(0, 0, 0)]*num_pixels
         pixels[i] = (int(red / 10), int(green / 10), int(blue / 10))
 
         for j in range(1, EyeSize + 1):
@@ -444,16 +457,17 @@ def OutsideToCenter(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
 
         pixels[num_pixels - i - EyeSize -
                1] = (int(red / 10), int(green / 10), int(blue / 10))
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
     time.sleep(ReturnDelay)
 
 
-def LeftToRight(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
-    num_pixels = pixels._pixels
+def LeftToRight(num_pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(num_pixels - EyeSize - 2):
-        pixels.fill((0, 0, 0))
+        pixels = [(0, 0, 0)]*num_pixels
         pixels[i] = (int(red / 10), int(green / 10), int(blue / 10))
 
         for j in range(1, EyeSize + 1):
@@ -461,16 +475,17 @@ def LeftToRight(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
 
         pixels[i + EyeSize + 1] = (int(red / 10),
                                    int(green / 10), int(blue / 10))
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
     time.sleep(ReturnDelay)
 
 
-def RightToLeft(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
-    num_pixels = pixels._pixels
+def RightToLeft(num_pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(num_pixels - EyeSize - 2, 0, - 1):
-        pixels.fill((0, 0, 0))
+        pixels = [(0, 0, 0)]*num_pixels
         pixels[i] = (int(red / 10), int(green / 10), int(blue / 10))
 
         for j in range(1, EyeSize + 1):
@@ -478,88 +493,78 @@ def RightToLeft(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay):
 
         pixels[i + EyeSize + 1] = (int(red / 10),
                                    int(green / 10), int(blue / 10))
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
 
     time.sleep(ReturnDelay)
 
 
-def Twinkle(pixels, red, green, blue, Count, SpeedDelay, OnlyOne):
-    num_pixels = pixels._pixels
-    pixels.fill((0, 0, 0))
-
+def Twinkle(num_pixels, red, green, blue, Count, SpeedDelay, OnlyOne, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(Count):
         pixels[random.randint(0, num_pixels - 1)] = (red, green, blue)
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
         if OnlyOne:
-            pixels.fill((0, 0, 0))
+            pixels = [(0, 0, 0)]*num_pixels
 
     time.sleep(SpeedDelay)
 
 
-def TwinkleRandom(pixels, Count, SpeedDelay, OnlyOne):
-    num_pixels = pixels._pixels
-    pixels.fill((0, 0, 0))
-
+def TwinkleRandom(num_pixels, Count, SpeedDelay, OnlyOne, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(Count):
         pixels[random.randint(0, num_pixels - 1)] = (random.randint(0, 255),
                                                      random.randint(0, 255), random.randint(0, 255))
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
         if OnlyOne:
-            pixels.fill((0, 0, 0))
+            pixels = [(0, 0, 0)]*num_pixels
 
     time.sleep(SpeedDelay)
 
 
-def Sparkle(pixels, red, green, blue, Count, SpeedDelay):
-    num_pixels = pixels._pixels
-
+def Sparkle(num_pixels, red, green, blue, Count, SpeedDelay, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for i in range(Count):
         pixel = random.randint(0, num_pixels - 1)
         pixels[pixel] = (red, green, blue)
-        pixels.show()
+        if callable(write_fn):
+            write_fn(pixels)
         time.sleep(SpeedDelay)
         pixels[pixel] = (0, 0, 0)
 
 
-def SnowSparkle(pixels, red, green, blue, Count, SparkleDelay, SpeedDelay):
-    num_pixels = pixels._pixels
-    pixels.fill((red, green, blue))
-
-    for i in range(Count):
-        pixel = random.randint(0, num_pixels - 1)
-        pixels[pixel] = (255, 255, 255)
-        pixels.show()
-        time.sleep(SparkleDelay)
-        pixels[pixel] = (red, green, blue)
-        pixels.show()
-        time.sleep(SpeedDelay)
-
-
-def MeteorRain(pixels, red, green, blue, meteorSize, meteorTrailDecay, meteorRandomDecay, SpeedDelay, cycles):
-    num_pixels = pixels._pixels
+def MeteorRain(num_pixels, red, green, blue, meteorSize, meteorTrailDecay, meteorRandomDecay, SpeedDelay, cycles, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
     for loop in range(cycles):
-        pixels.fill((0, 0, 0))
-
+        pixels = [(0, 0, 0)]*num_pixels
         for i in range(num_pixels*2):
             # fade brightness all LEDs one step
             for j in range(num_pixels):
                 if (not meteorRandomDecay) or (random.randint(0, 10) > 5):
-                    pixels[j] = fadeToBlack(
-                        pixels[j], j, meteorTrailDecay)
+                    pixels[j] = fadeToBlack(pixels[j], j, meteorTrailDecay)
 
             # draw meteor
             for k in range(meteorSize):
                 if (i - k < num_pixels) and (i - j >= 0):
                     pixels[i - k] = (red, green, blue)
 
-            pixels.show()
+            if callable(write_fn):
+                write_fn(pixels)
             time.sleep(SpeedDelay)
 
 
-def shutdown(pixels):
-    for i in range(pixels._pixels):
-        pixels[i] = (0, 0, 0)
-    pixels.show()
+def fill(num_pixels, r, g, b, write_fn=None):
+    pixels = [(r, g, b)]*num_pixels
+    if callable(write_fn):
+        write_fn(pixels)
+
+
+def shutdown(num_pixels, write_fn=default_write_fn):
+    pixels = [(0, 0, 0)]*num_pixels
+    if callable(write_fn):
+        write_fn(pixels)

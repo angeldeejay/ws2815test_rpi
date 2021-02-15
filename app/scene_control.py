@@ -2,6 +2,7 @@ import os
 import sys
 import traceback
 from time import sleep
+from config import MAIN_HOST, SWITCH_HOST, MQTT_BROKER_HOST, START_AT, END_AT, DATE_FMT, TIME_FMT
 from lib.devices.sonoff import Sonoff as Switch
 from lib.network_scanner import NetworkScanner
 from lib.devices.sp108e import SP108E_Controller as LedController, MonoEffect, PresetEffect, CustomEffect
@@ -11,37 +12,28 @@ from optparse import OptionParser
 
 class SceneControlService:
     def __init__(self, quiet=False):
-        self.main_host = "192.168.1.13"
-        self.switch_host = "192.168.1.153"
-        self.controller_host = "192.168.1.203"
-        self.mqtt_broker_host = "127.0.0.1"
+        self.main_host = MAIN_HOST
+        self.switch_host = SWITCH_HOST
+        self.mqtt_broker_host = MQTT_BROKER_HOST
 
         self.__log(f'Main Host:        {self.main_host}')
         self.__log(f'Switch Host:      {self.switch_host}')
         self.__log(f'MQTT Broker Host: {self.mqtt_broker_host}')
-        self.__log(f'Controller Host:  {self.controller_host}')
 
         self.__scanner = NetworkScanner(ips=[
             self.main_host,
             self.switch_host,
             self.mqtt_broker_host,
-            self.controller_host,
         ])
 
-        self.__start_at = '17:55:00'
-        self.__end_at = '23:30:00'
-        self.__date_fmt = '%Y/%m/%d '
-        self.__time_fmt = '%H:%M:%S'
         self.running = False
-
         self.switch = None
-        self.controller = None
 
     def __log(self, a, sep=' => ', flush=True, end="\n"):
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __is_night(self):
-        return evaluate_day_night(self.__start_at, self.__end_at, self.__date_fmt, self.__time_fmt)
+        return evaluate_day_night(START_AT, END_AT, DATE_FMT, TIME_FMT)
 
     def stop(self):
         print('', flush=True)
@@ -78,7 +70,8 @@ class SceneControlService:
             # Connecting switch
             if self.switch is not None:
                 attempts = 0
-                while attempts < 5:
+                while attempts < 10:
+                    print(self.switch, flush=True)
                     if self.switch.connected:
                         return True
                     attempts += 1
@@ -86,32 +79,6 @@ class SceneControlService:
 
         self.__log(f'Switch could not be found in {self.switch_host}')
         self.switch = None
-        return False
-
-    def wait_controller(self):
-        # Controller available
-        if self.wait_switch():
-            # Detecting controller
-            if self.controller is None:
-                self.__log(
-                    f'Detecting Led controller in {self.controller_host}...')
-                if self.__scanner.wait_host(self.controller_host):
-                    self.controller = LedController(self.controller_host)
-                    self.controller.set_calculated_segments(142, 1)
-            
-            if self.controller is not None:
-                if self.controller.sync_state():
-                    # Connecting controller
-                    attempts = 0
-                    while attempts < self.controller.timeout:
-                        if self.controller.connected:
-                            return True
-                        attempts += 1
-                        sleep(1)
-
-        self.controller = None
-        self.__log(
-            f'Led controller could not be found in {self.controller_host}')
         return False
 
     def run(self):
@@ -129,20 +96,6 @@ class SceneControlService:
                     if not self.switch.on:
                         self.__log("Turning on switch")
                     self.switch.turn_on()
-                    # if self.wait_controller():
-                    #     # Setting animation
-                    #     if night_mode:
-                    #         preset = PresetEffect.RAINBOW
-                    #         self.controller.set_brightness(255)
-                    #     else:
-                    #         preset = CustomEffect.CUSTOM_1
-                    #         self.controller.set_brightness(32)
-
-                    #     if self.controller.state.preset != preset:
-                    #         self.controller.set_preset(preset)
-
-                    #     if not self.controller.state.is_on:
-                    #         self.controller.turn_on()
                         
                 else:
                     if self.switch.on:
@@ -164,10 +117,10 @@ if __name__ == '__main__':
         if options.terminate == False:
             main.run()
         else:
-            raise Exception()
+            main.stop()
+    except KeyboardInterrupt:
+        main.stop()
+        pass
     except:
         traceback.print_exc()
-        pass
-    finally:
-        main.stop()
         pass

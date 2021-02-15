@@ -1,25 +1,25 @@
-from .neopixel import neopixel, Pin, hardware_available
-from ..threading import Thread
-from ..network_scanner import NetworkScanner
-from ..utils import evaluate_day_night
-import traceback
-import time
 from ..animations import shutdown, RainbowCycle, NewKITT
+from ..network_scanner import NetworkScanner
+from ..threading import Thread
+from ..utils import evaluate_day_night
+from .neopixel import neopixel, Pin, hardware_available
+from config import FAN_STRIP_PIXELS, START_AT, END_AT, DATE_FMT, TIME_FMT, LAPTOP_ETH0, LAPTOP_WLAN1
+import time
+import traceback
 
 
 class Fan:
-    def __init__(self, gpio_pin=None, led_count=None, pixel_order=neopixel.GRB, ips=None, start_at=None, end_at=None, date_fmt=None, time_fmt=None, quiet=False):
+    def __init__(self, gpio_pin=None, quiet=False):
         self.on = False
         self.gpio_pin = Pin(int(gpio_pin))
-        self.led_count = int(led_count)
-        self.__start_at = start_at
-        self.__end_at = end_at
-        self.__date_fmt = date_fmt
-        self.__time_fmt = time_fmt
+        self.led_count = int(FAN_STRIP_PIXELS)
         self.__simulate = not hardware_available
         self.__quiet = quiet
-        self.__ips = ips
-        self.__pixel_order = pixel_order
+        self.__ips = [
+            LAPTOP_ETH0,
+            LAPTOP_WLAN1
+        ]
+        self.__pixel_order = neopixel.GRB
         self.__thread = None
         self.__pixels = None
         self.__scanner = None
@@ -73,7 +73,7 @@ class Fan:
         self.init_pixels()
         while self.__pixels is not None:
             try:
-                shutdown(self.__pixels)
+                shutdown(self.led_count, write_fn=self.__write)
                 self.__pixels.deinit()
                 self.__pixels = None
             except Exception as e:
@@ -85,6 +85,11 @@ class Fan:
             self.__scanner.stop()
             self.__scanner = None
 
+    def __write(self, data):
+        for i in range(self.led_count):
+            self.__pixels[i] = data[i]
+        self.__pixels.show()
+
     def __animate(self):
         while True:
             if not self.on:
@@ -95,16 +100,15 @@ class Fan:
 
             if alive:
                 if self.__pixels is not None:
-                    if evaluate_day_night(self.__start_at, self.__end_at, self.__date_fmt, self.__time_fmt):
+                    if evaluate_day_night(START_AT, END_AT, DATE_FMT, TIME_FMT):
                         # RainbowCycle(pixels, SpeedDelay, cycles)
-                        RainbowCycle(self.__pixels, 3 / 255, 1)
+                        RainbowCycle(self.led_count, 3 / 255, 1, write_fn=self.__write)
                     else:
                         # NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles)
                         eye_size = max(1, int(round(self.led_count / 10)))
                         steps = (self.led_count - eye_size - 2) * 8
                         speed = 6 / steps
-                        NewKITT(self.__pixels, 128, 0,
-                                0, eye_size, speed, 0, 1)
+                        NewKITT(self.led_count, 128, 0, 0, eye_size, speed, 0, 1, write_fn=self.__write)
             else:
                 if self.__pixels is not None:
                     self.__pixels.fill((0, 0, 0))

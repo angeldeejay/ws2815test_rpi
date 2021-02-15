@@ -36,6 +36,11 @@ class LedStrip:
     def __log(self, a, sep=' => ', flush=True, end="\n"):
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
+    def __write(self, data):
+        for i in range(self.led_count):
+            self.__pixels[i] = data[i]
+        self.__pixels.show()
+
     def set_animation(self, animation):
         if callable(animation):
             self.animation = animation
@@ -67,7 +72,7 @@ class LedStrip:
     def start(self):
         # Init led strip
         self.init_pixels()
-        shutdown(self.__pixels)
+        shutdown(self.led_count, write_fn=self.__write)
 
     def stop(self):
         # Stop thread
@@ -80,7 +85,7 @@ class LedStrip:
         self.init_pixels()
         while self.__pixels is not None:
             try:
-                shutdown(self.__pixels)
+                shutdown(self.led_count, write_fn=self.__write)
                 self.__pixels.deinit()
                 self.__pixels = None
             except Exception as e:

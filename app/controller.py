@@ -1,22 +1,19 @@
-import os
-import sys
-import traceback
-from time import sleep
+from config import LOCALHOST, START_AT, END_AT, DATE_FMT, TIME_FMT
+from lib.animations import RainbowCycle, NewKITT
 from lib.artnet import ArtNet
 from lib.colors import wheel
 from lib.network_scanner import NetworkScanner
 from lib.utils import evaluate_day_night
 from optparse import OptionParser
 from subprocess import Popen as call_process, PIPE
-
-START_AT = '17:55:00'
-END_AT = '23:30:00'
-DATE_FMT = '%Y/%m/%d '
-TIME_FMT = '%H:%M:%S'
+from time import sleep
+import os
+import sys
+import traceback
 
 
 class ControllerService:
-    def __init__(self, ip='127.0.0.1', universe=None, led_count=None, quiet=False):
+    def __init__(self, ip=LOCALHOST, universe=None, led_count=None, quiet=False):
         self.target_ip = ip
         self.universe = universe
         self.led_count = led_count
@@ -34,16 +31,25 @@ class ControllerService:
     def __is_night(self):
         return evaluate_day_night(START_AT, END_AT, DATE_FMT, TIME_FMT)
 
+    def __write(self, data):
+        self.packager.set_led_count(self.led_count)
+        for i in range(self.led_count):
+            self.packager.set_rgb(i, *data[i])
+        self.packager.send()
+
     def animate(self):
         # Data placeholder
-        self.packager.set(511, self.led_count)
-        for j in range(255):
-            for i in range(self.led_count):
-                pixel_index = (i * 256 // self.led_count) + j
-                color = wheel(pixel_index & 255, 'GRB')
-                self.packager.set_rgb(i, *color)
-            self.packager.send()
-            sleep(9 / 255)
+        self.packager.set_led_count(self.led_count)
+        if evaluate_day_night(START_AT, END_AT, DATE_FMT, TIME_FMT):
+            # RainbowCycle(pixels, SpeedDelay, cycles)
+            RainbowCycle(self.led_count, 3 / 255, 1, write_fn=self.__write)
+        else:
+            # NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles)
+            eye_size = max(1, int(round(self.led_count / 10)))
+            steps = (self.led_count - eye_size - 2) * 8
+            speed = 6 / steps
+            NewKITT(self.led_count, 128, 0, 0, eye_size,
+                    speed, 0, 1, write_fn=self.__write)
 
     def run(self):
         self.running = True
@@ -59,13 +65,13 @@ class ControllerService:
         print('', flush=True)
         self.__log('Exiting...')
         self.running = False
-        attemps = 0
-        while attemps < 10:
-          self.packager.clear()
-          self.packager.set(511, self.led_count)
-          self.packager.send()
-          attempts += 1
-          sleep(0.1)
+        attempts = 0
+        while attempts < 5:
+            self.packager.clear()
+            self.packager.set_led_count(self.led_count)
+            self.packager.send()
+            attempts += 1
+            sleep(0.1)
         self.packager.close()
 
 
@@ -88,9 +94,10 @@ if __name__ == '__main__':
         if options.terminate == False:
             main.run()
         else:
-            raise Exception()
-    except:
-        pass
-    finally:
+            main.stop()
+    except KeyboardInterrupt:
         main.stop()
+        pass
+    except:
+        traceback.print_exc()
         pass

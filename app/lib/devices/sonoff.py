@@ -19,8 +19,9 @@ class Sonoff:
 
     def __on_connect(self, client, userdata, flags, rc):
         if rc == 0:
+            if self.connected == False:
+                self.__log(f'Connected to {self.broker}:{self.port}')
             self.connected = True
-            self.__log(f'Connected to {self.broker}:{self.port}')
             self.client.subscribe(f'stat/{self.device}/POWER')
             self.__publish(f'cmnd/{self.device}/Power')
         else:
@@ -34,7 +35,8 @@ class Sonoff:
         self.on = status == "ON"
 
     def __on_disconnect(self, client, userdata, rc):
-        self.__log('Disconnected. Reconnecting...')
+        if self.connected == True:
+            self.__log('Disconnected. Reconnecting...')
         self.connected = False
         try:
             self.client.loop_stop()

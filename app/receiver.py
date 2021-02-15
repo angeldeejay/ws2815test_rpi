@@ -1,22 +1,21 @@
-import os
-import sys
-import traceback
-from time import sleep
+from config import ANYWHERE
 from lib.artnet import ArtNet
 from lib.devices.neopixel import neopixel, Pin, hardware_available
 from lib.threading import Thread
 from optparse import OptionParser
 from subprocess import Popen as call_process, PIPE
+from time import sleep
+import os
+import sys
+import traceback
 
 
 class ReceiverService:
     def __init__(self, quiet=False):
         self.running = False
         self.quiet = quiet
-        self.packager = ArtNet(target_ip='0.0.0.0', receiver=True)
-        self.__thread = None
+        self.packager = ArtNet(target_ip=ANYWHERE, receiver=True)
 
-        self.running = False
         if not hardware_available:
             self.strips = [
                 neopixel.NeoPixel(Pin(18), 170, auto_write=False,
@@ -70,9 +69,10 @@ if __name__ == '__main__':
         if options.terminate == False:
             main.run()
         else:
-            raise Exception()
-    except:
-        pass
-    finally:
+            main.stop()
+    except KeyboardInterrupt:
         main.stop()
+        pass
+    except:
+        traceback.print_exc()
         pass

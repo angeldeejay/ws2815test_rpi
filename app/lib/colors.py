@@ -1,9 +1,7 @@
-from .devices.neopixel import neopixel
-
-
-def wheel(position, order):
+def wheel(position: int, order='RGB'):
     # Input a value 0 to 255 to get a color value.
     # The colours are a transition r - g - b - back to r.
+    w = 255
     if position < 0 or position > 255:
         r = g = b = 0
     elif position < 85:
@@ -20,49 +18,73 @@ def wheel(position, order):
         r = 0
         g = int(position * 3)
         b = int(255 - position * 3)
-    return (r, g, b) if order in (neopixel.RGB, neopixel.GRB) else (r, g, b, 0)
+
+    result = ()
+    for i in order.lower():
+        if i == 'r':
+            result += (r, )
+        elif i == 'g':
+            result += (g, )
+        elif i == 'b':
+            result += (b, )
+        elif i == 'w':
+            result += (w, )
+
+    return result
 
 
-def wheelBrightLevel(pixels, pos, bright):
-    num_pixels = pixels._pixels
-    order = pixels._byteorder_string
+def wheelBrightLevel(position: int, bright: int, order='RGB'):
     # Input a value 0 to 255 to get a color value.
     # The colours are a transition r - g - b - back to r.
-    if pos < 0 or pos > 255:
+    w = bright
+    if position < 0 or position > 255:
         r = g = b = 0
-    elif pos < 85:
-        r = int(pos * 3)
-        g = int(255 - pos*3)
+    elif position < 85:
+        r = int(position * 3)
+        g = int(255 - position*3)
         b = 0
-    elif pos < 170:
-        pos -= 85
-        r = int(255 - pos*3)
+    elif position < 170:
+        position -= 85
+        r = int(255 - position*3)
         g = 0
-        b = int(pos*3)
+        b = int(position*3)
     else:
-        pos -= 170
+        position -= 170
         r = 0
-        g = int(pos*3)
-        b = int(255 - pos*3)
+        g = int(position*3)
+        b = int(255 - position*3)
     # bight level logic
     color = brightnessRGB(r, g, b, bright)
     r = color[0]
     g = color[1]
     b = color[2]
-    return color if order == neopixel.RGB or order == neopixel.GRB else (r, g, b, 0)
+
+    result = ()
+    for i in order.lower():
+        if i == 'r':
+            result += (r, )
+        elif i == 'g':
+            result += (g, )
+        elif i == 'b':
+            result += (b, )
+        elif i == 'w':
+            result += (w, )
+
+    return result
 
 
-def brightnessRGB(red, green, blue, bright):
+def brightnessRGB(red: int, green: int, blue: int, bright: int, order='RGB'):
     r = (bright/256.0)*red
     g = (bright/256.0)*green
     b = (bright/256.0)*blue
     return (int(r), int(g), int(b))
 
 
-def fadeToBlack(oldColor, ledNo, fadeValue):
+def fadeToBlack(oldColor: tuple, fadeValue: int, order='RGB'):
     r = oldColor[0]
     g = oldColor[1]
     b = oldColor[2]
+    w = 0
     if (r <= 10):
         r = 0
     else:
@@ -75,4 +97,16 @@ def fadeToBlack(oldColor, ledNo, fadeValue):
         b = 0
     else:
         b = b - (b * fadeValue / 256)
-    return (int(r), int(g), int(b))
+
+    result = ()
+    for i in order.lower():
+        if i == 'r':
+            result += (r, )
+        elif i == 'g':
+            result += (g, )
+        elif i == 'b':
+            result += (b, )
+        elif i == 'w':
+            result += (w, )
+
+    return result

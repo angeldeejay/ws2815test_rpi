@@ -136,9 +136,9 @@ class ArtNet:
         """Clear DMX buffer."""
         self.BUFFER = bytearray(self.PACKET_SIZE)
 
-    def set(self, address, value):
+    def set_led_count(self, led_count):
         """Set buffer."""
-        self.BUFFER[address] = self.__put_in_range(value, 0, 255, False)
+        self.BUFFER[511] = self.__put_in_range(led_count, 0, 170, False)
 
     def set_rgb(self, address, r, g, b):
         address = address * 3
