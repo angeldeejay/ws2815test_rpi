@@ -144,13 +144,13 @@ def HeartBeat(num_pixels, beat1Step, beat1FadeInDelay, beat1FadeOutDelay, beat1D
     # HeartBeat(3, .005, .003, 0.001, 6, .002, .003, 0.05, 10)
     #
     #   beat1Step: (1 - 255) first beat color transition step
-    #   beat1FadeInDelay: (0 - 2147483647) first beat fade in trasition speed, in seconds
-    #   beat1FadeOutDelay: (0 - 2147483647) first beat fade out trasition speed, in seconds
-    #   beat1Delay: (0 - 2147483647)  beat time delay bewteen frist and sencond beat, in seconds
+    #   beat1FadeInDelay: (0 - 2147483647) first beat fade in transition speed, in seconds
+    #   beat1FadeOutDelay: (0 - 2147483647) first beat fade out transition speed, in seconds
+    #   beat1Delay: (0 - 2147483647)  beat time delay between first and second beat, in seconds
     #   beat2Step: (1 - 255) second beat color transition step
-    #   beat2FadeInDelay: (0 - 2147483647) second beat fade in trasition speed, in seconds
-    #   beat2FadeOutDelay: (0 - 2147483647) second beat fade out trasition speed, in seconds
-    #   beat1Delay: (0 - 2147483647)  beat time delay bewteen sencond and first beat, in seconds
+    #   beat2FadeInDelay: (0 - 2147483647) second beat fade in transition speed, in seconds
+    #   beat2FadeOutDelay: (0 - 2147483647) second beat fade out transition speed, in seconds
+    #   beat1Delay: (0 - 2147483647)  beat time delay between second and first beat, in seconds
     #   cycles: (1 - 2147483647) number of times this effect will run
     pixels = [(0, 0, 0)]*num_pixels
     # gather existing colors in strip of pixel
@@ -202,7 +202,7 @@ def Rotate(num_pixels, delay, cycles, write_fn=default_write_fn):
     strip = pixels
     for loop in range(cycles):
         pixels[0] = pixels[num_pixels - 1]
-        # rotate pixel positon
+        # rotate pixel position
         for i in range(num_pixels - 1, 0, - 1):
             pixels[i] = pixels[i - 1]
         # there is an issue with first 2 pixels are same color
@@ -259,12 +259,12 @@ def RainbowCycle(num_pixels, SpeedDelay, cycles, write_fn=default_write_fn):
 def FireCustom(num_pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles, write_fn=default_write_fn):
     # FireCustom: makes the strand of pixels show an effect that looks flame. This effect also
     # adds more detail control of "sparks" that inject "heat" to the effect, thus changing color
-    # and flame length. The spark position can also be controled via start and end range.
+    # and flame length. The spark position can also be controlled via start and end range.
     # Color options include red, green, and blue.
     #
     #   CoolingRangeStart: (0 - 255) cooling random value, start range
     #   CoolingRangeEnd: (0 - 255) cooling random value, end range
-    #   Sparking: (0 - 100)  chance of sparkes are added randomly controld througn a % value, 100= 100% and 0 = 0%
+    #   Sparking: (0 - 100)  chance of sparkles are added randomly controld through a % value, 100= 100% and 0 = 0%
     #   SparkingRangeStart: (0 - number of pixels) spark position random value, start range
     #   SparkingRangeEnd: (0 - number of pixels) spark position random value, end range
     #   SpeedDelay: (0 - ...) slow down the effect by injecting a delay in Sec. 0=no delay, .05=50msec, 2=2sec
@@ -273,7 +273,7 @@ def FireCustom(num_pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, Sparkin
     #  - add choice for 3 diffrent fire effect logic.
     #  - add choice to control heat values "random.randint(160, 255)"
     #  - add choice for flame color options include red, green, and blue.
-    # intialize heat array, same size of as the strip of pixels
+    # initialize heat array, same size of as the strip of pixels
     pixels = [(0, 0, 0)]*num_pixels
     heat = [0]*num_pixels
     #
@@ -314,13 +314,13 @@ def FireCustom(num_pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, Sparkin
 
 
 def FireCustomMirror(num_pixels, CoolingRangeStart, CoolingRangeEnd, Sparking, SparkingRangeStart, SparkingRangeEnd, SpeedDelay, cycles, write_fn=default_write_fn):
-    # FireCustomMirror: makes the strand of pixels show an effect that looks flame. This is simular to FireCustom,
+    # FireCustomMirror: makes the strand of pixels show an effect that looks flame. This is similar to FireCustom,
     # however it mirrors the effect on top and bottom  (rather than using just from bottom). The intent is to
     # have a fire effect that could be used 144 pixel strip for a lanyard id.
     #
     #   CoolingRangeStart: (0 - 255) cooling random value, start range
     #   CoolingRangeEnd: (0 - 255) cooling random value, end range
-    #   Sparking: (0 - 100)  chance of sparkes are added randomly controld througn a % value, 100= 100% and 0 = 0%
+    #   Sparking: (0 - 100)  chance of sparkles are added randomly controld through a % value, 100= 100% and 0 = 0%
     #   SparkingRangeStart: (0 - number of pixels) spark position random value, start range
     #   SparkingRangeEnd: (0 - number of pixels) spark position random value, end range
     #   SpeedDelay: (0 - ...) slow down the effect by injecting a delay in Sec. 0=no delay, .05=50msec, 2=2sec
