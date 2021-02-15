@@ -6,12 +6,13 @@ import traceback
 
 
 class LedStrip:
-    def __init__(self, gpio_pin=None, led_count=None, pixel_order=None, quiet=False, animation=None):
+    def __init__(self, gpio_pin=None, brightness=1.0, led_count=None, pixel_order=None, quiet=False, animation=None):
         self.on = False
         self.gpio_pin = Pin(gpio_pin)
         self.led_count = int(led_count)
         self.pixel_order = pixel_order
         self.simulate = not hardware_available
+        self.brightness = brightness
         self.quiet = quiet
         self.__speed = self.led_count / 50
         self.animation = self.set_animation(animation)
@@ -41,16 +42,19 @@ class LedStrip:
         else:
             self.animation = None
 
+    def set_pixel_color(self, pos, r, g, b):
+        self.__pixels[pos] = (r, g, b)
+
     def init_pixels(self):
         while self.__pixels is None:
             try:
                 placeholder = None
                 if self.simulate == True:
-                    placeholder = neopixel.NeoPixel(
-                        self.gpio_pin, self.led_count, auto_write=False, pixel_order=self.pixel_order, simulate=not self.quiet)
+                    placeholder = neopixel.NeoPixel(self.gpio_pin, self.led_count, brightness=self.brightness,
+                                                    auto_write=False, pixel_order=self.pixel_order, simulate=not self.quiet)
                 else:
-                    placeholder = neopixel.NeoPixel(
-                        self.gpio_pin, self.led_count, auto_write=False, pixel_order=self.pixel_order)
+                    placeholder = neopixel.NeoPixel(self.gpio_pin, self.led_count, brightness=self.brightness,
+                                                    auto_write=False, pixel_order=self.pixel_order)
                 self.__pixels = placeholder
                 self.__pixels
                 self.__log(f'Initialized LED Strip: {self}')

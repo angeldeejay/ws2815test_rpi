@@ -1,0 +1,18 @@
+[Unit]
+Description=Led Strip Controller over ArtNET [%I]
+PartOf=controllers.service
+After=controllers.service
+
+[Service]
+Type=idle
+Restart=always
+RestartSec=1
+Environment=SERVICE_ROOT=
+StartLimitInterval=0
+StartLimitBurst=120
+ExecStart=/usr/bin/env python3 -u ${SERVICE_ROOT}/app/controller.py -q %i
+ExecStopPost=-/usr/bin/env python3 -u ${SERVICE_ROOT}/app/controller.py --off -q %i
+TimeoutStopSec=120
+
+[Install]
+WantedBy=controllers.service

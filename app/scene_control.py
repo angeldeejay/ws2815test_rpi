@@ -129,20 +129,20 @@ class SceneControlService:
                     if not self.switch.on:
                         self.__log("Turning on switch")
                     self.switch.turn_on()
-                    if self.wait_controller():
-                        # Setting animation
-                        if night_mode:
-                            preset = PresetEffect.RAINBOW
-                            self.controller.set_brightness(255)
-                        else:
-                            preset = CustomEffect.CUSTOM_1
-                            self.controller.set_brightness(32)
+                    # if self.wait_controller():
+                    #     # Setting animation
+                    #     if night_mode:
+                    #         preset = PresetEffect.RAINBOW
+                    #         self.controller.set_brightness(255)
+                    #     else:
+                    #         preset = CustomEffect.CUSTOM_1
+                    #         self.controller.set_brightness(32)
 
-                        if self.controller.state.preset != preset:
-                            self.controller.set_preset(preset)
+                    #     if self.controller.state.preset != preset:
+                    #         self.controller.set_preset(preset)
 
-                        if not self.controller.state.is_on:
-                            self.controller.turn_on()
+                    #     if not self.controller.state.is_on:
+                    #         self.controller.turn_on()
                         
                 else:
                     if self.switch.on:

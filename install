@@ -5,6 +5,8 @@ if (( $EUID != 0 )); then
 fi
 SCRIPTPATH="$(cd "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 echo $SCRIPTPATH;
+$SUDO apt install -y python3-pip
+# curl https://get.pimoroni.com/unicornhat | bash
 
 $SUDO pip3 install -r $SCRIPTPATH/requirements.txt
 $SUDO python3 -m pip install --force-reinstall adafruit-blinka

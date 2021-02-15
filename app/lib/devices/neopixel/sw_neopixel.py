@@ -99,7 +99,7 @@ class NeoPixel(list):
                 try:
                     output = ''.join([colorize('█', (r, g, b), None)
                                       for r, g, b in self._data])
-                    self.__log(output, end=end, flush=True)
+                    print(self.__class__.__name__, output, sep=f'<{self.pin}> => ', end=end, flush=True)
                 except:
                     traceback.print_exc()
                     pass

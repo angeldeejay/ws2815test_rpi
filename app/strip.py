@@ -26,7 +26,7 @@ class StripService:
         self.__time_fmt = '%H:%M:%S'
 
         self.strip = LedStrip(
-            gpio_pin=self.gpio_pin, led_count=self.led_count, quiet=quiet, pixel_order="GRB")
+            gpio_pin=self.gpio_pin, brightness=1.0, led_count=self.led_count, quiet=quiet, pixel_order="GRB")
 
     def __log(self, a, sep=' => ', flush=True, end="\n"):
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
