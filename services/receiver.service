@@ -12,6 +12,8 @@ StartLimitBurst=120
 ExecStart=/usr/bin/env python3 -u ${SERVICE_ROOT}/app/receiver.py -q
 ExecStopPost=-/usr/bin/env python3 -u ${SERVICE_ROOT}/app/receiver.py --off -q
 TimeoutStopSec=120
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=20
 
 [Install]
 WantedBy=multi-user.target

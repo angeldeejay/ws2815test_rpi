@@ -127,7 +127,7 @@ class ArtNet:
             "lengthHigh": raw_data[16:17],
             "lengthLow": raw_data[17:18],
             "binaryData": raw_data[18:530],
-            "data": [color for color in self.__listIntoTuples(decodedData[0:510])],
+            "data": decodedData[0:510],
             "pixels_count": decodedData[511]
         }
         return data
@@ -139,6 +139,10 @@ class ArtNet:
     def set_led_count(self, led_count):
         """Set buffer."""
         self.BUFFER[511] = self.__put_in_range(led_count, 0, 170, False)
+
+    def set_value(self, address, value):
+        """Set buffer."""
+        self.BUFFER[address] = self.__put_in_range(value, 0, 255, False)
 
     def set_rgb(self, address, r, g, b):
         address = address * 3

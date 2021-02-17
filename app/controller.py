@@ -1,5 +1,4 @@
 from config import LOCALHOST, START_AT, END_AT, DATE_FMT, TIME_FMT
-from lib.animations import RainbowCycle, NewKITT
 from lib.artnet import ArtNet
 from lib.colors import wheel
 from lib.network_scanner import NetworkScanner
@@ -31,25 +30,32 @@ class ControllerService:
     def __is_night(self):
         return evaluate_day_night(START_AT, END_AT, DATE_FMT, TIME_FMT)
 
-    def __write(self, data):
-        self.packager.set_led_count(self.led_count)
-        for i in range(self.led_count):
-            self.packager.set_rgb(i, *data[i])
-        self.packager.send()
-
     def animate(self):
         # Data placeholder
+        self.packager.clear()
         self.packager.set_led_count(self.led_count)
+        [self.packager.set_value(i, 0) for i in range(170)]
         if evaluate_day_night(START_AT, END_AT, DATE_FMT, TIME_FMT):
             # RainbowCycle(pixels, SpeedDelay, cycles)
-            RainbowCycle(self.led_count, 3 / 255, 1, write_fn=self.__write)
+            speed = 2 / 255
+            animation = f'RainbowCycle({self.led_count},{speed},1,write_fn=lambda x: self.render(x,{self.led_count},pixels))'
+            print(animation, flush=True)
+            address = 0
+            for c in animation:
+                self.packager.set_value(address, ord(c))
+                address += 1
         else:
             # NewKITT(pixels, red, green, blue, EyeSize, SpeedDelay, ReturnDelay, cycles)
-            eye_size = max(1, int(round(self.led_count / 10)))
+            eye_size = max(1, int(round(self.led_count / 5)))
             steps = (self.led_count - eye_size - 2) * 8
-            speed = 6 / steps
-            NewKITT(self.led_count, 128, 0, 0, eye_size,
-                    speed, 0, 1, write_fn=self.__write)
+            speed = 4 / steps
+            animation = f'NewKITT({self.led_count},128,0,0,{eye_size},{speed},0,1,write_fn=lambda x: self.render(x,{self.led_count},pixels))'
+            print(animation, flush=True)
+            address = 0
+            for c in animation:
+                self.packager.set_value(address, ord(c))
+                address += 1
+        self.packager.send()
 
     def run(self):
         self.running = True
@@ -69,6 +75,11 @@ class ControllerService:
         while attempts < 5:
             self.packager.clear()
             self.packager.set_led_count(self.led_count)
+            animation = f'shutdown({self.led_count},write_fn=lambda x: self.render(x,{self.led_count},pixels))'
+            address = 0
+            for c in animation:
+                self.packager.set_value(address, ord(c))
+                address += 1
             self.packager.send()
             attempts += 1
             sleep(0.1)

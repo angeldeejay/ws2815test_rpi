@@ -14,9 +14,8 @@ class LedStrip:
         self.simulate = not hardware_available
         self.brightness = brightness
         self.quiet = quiet
-        self.__speed = self.led_count / 50
-        self.animation = self.set_animation(animation)
-        self.__pixels = None
+        self.pixels = None
+        self.animation = None
         # Start thread
         self.on = True
         self.__thread = Thread(target=self.__animate, args=[], daemon=True)
@@ -28,8 +27,7 @@ class LedStrip:
             'simulate': self.simulate,
             'quiet': self.quiet,
             'animation': self.animation,
-            'pixels': self.__pixels,
-            'speed': self.__speed,
+            'pixels': self.pixels,
         }
         return f'@{self.__class__.__name__}{attributes}'
 
@@ -37,9 +35,19 @@ class LedStrip:
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
     def __write(self, data):
-        for i in range(self.led_count):
-            self.__pixels[i] = data[i]
-        self.__pixels.show()
+        for i in range(len(data)):
+            self.pixels[i] = data[i]
+        self.pixels.show()
+
+    def __animate(self):
+        while True:
+            if not self.on:
+                break
+
+            if callable(self.animation):
+                self.animation(self.pixels)
+            else:
+                time.sleep(1)
 
     def set_animation(self, animation):
         if callable(animation):
@@ -48,10 +56,10 @@ class LedStrip:
             self.animation = None
 
     def set_pixel_color(self, pos, r, g, b):
-        self.__pixels[pos] = (r, g, b)
+        self.pixels[pos] = (r, g, b)
 
     def init_pixels(self):
-        while self.__pixels is None:
+        while self.pixels is None:
             try:
                 placeholder = None
                 if self.simulate == True:
@@ -60,12 +68,12 @@ class LedStrip:
                 else:
                     placeholder = neopixel.NeoPixel(self.gpio_pin, self.led_count, brightness=self.brightness,
                                                     auto_write=False, pixel_order=self.pixel_order)
-                self.__pixels = placeholder
-                self.__pixels
+                self.pixels = placeholder
+                self.pixels
                 self.__log(f'Initialized LED Strip: {self}')
             except:
                 traceback.print_exc()
-                self.__pixels = None
+                self.pixels = None
                 pass
             time.sleep(0.1)
 
@@ -83,22 +91,12 @@ class LedStrip:
 
         # Stop led strip
         self.init_pixels()
-        while self.__pixels is not None:
+        while self.pixels is not None:
             try:
                 shutdown(self.led_count, write_fn=self.__write)
-                self.__pixels.deinit()
-                self.__pixels = None
+                self.pixels.deinit()
+                self.pixels = None
             except Exception as e:
                 self.__log(e)
                 pass
             time.sleep(0.1)
-
-    def __animate(self):
-        while True:
-            if not self.on:
-                break
-
-            if callable(self.animation):
-                self.animation(self.__pixels)
-            else:
-                time.sleep(1)

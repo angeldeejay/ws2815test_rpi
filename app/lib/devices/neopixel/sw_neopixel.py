@@ -19,7 +19,7 @@ GRBW = "GRBW"
 
 
 class NeoPixel(list):
-    def __init__(self, pin, n, *, bpp=3, brightness=1.0, auto_write=True, pixel_order=GRB, simulate=True):
+    def __init__(self, pin, n, *, bpp=3, brightness=1.0, auto_write=True, pixel_order=GRB, simulate=False):
         self._pixels = n
         self.pin = pin
         self.auto_write = auto_write
@@ -91,15 +91,16 @@ class NeoPixel(list):
     def show(self):
         return
 
+    def get_simulation(self):
+        return f'{self.__class__.__name__}<{self.pin}> => ' + ''.join([colorize('█', (r, g, b), None) for r, g, b in self._data])
+
     def simulate(self, end="\r"):
         if self.__simulate == True:
             while True:
                 if not self.on:
                     break
                 try:
-                    output = ''.join([colorize('█', (r, g, b), None)
-                                      for r, g, b in self._data])
-                    print(self.__class__.__name__, output, sep=f'<{self.pin}> => ', end=end, flush=True)
+                    print(self.get_simulation(), end=end, flush=True)
                 except:
                     traceback.print_exc()
                     pass

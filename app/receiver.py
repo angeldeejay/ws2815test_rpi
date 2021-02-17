@@ -1,6 +1,8 @@
 from config import ANYWHERE
 from lib.artnet import ArtNet
-from lib.devices.neopixel import neopixel, Pin, hardware_available
+from lib.animations import *
+from lib.devices.led_strip import LedStrip
+# from lib.devices.neopixel import neopixel, Pin, hardware_available
 from lib.threading import Thread
 from optparse import OptionParser
 from subprocess import Popen as call_process, PIPE
@@ -15,45 +17,44 @@ class ReceiverService:
         self.running = False
         self.quiet = quiet
         self.packager = ArtNet(target_ip=ANYWHERE, receiver=True)
-
-        if not hardware_available:
-            self.strips = [
-                neopixel.NeoPixel(Pin(18), 170, auto_write=False,
-                                  pixel_order='GRB', simulate=not self.quiet),
-                neopixel.NeoPixel(Pin(19), 170, auto_write=False,
-                                  pixel_order='GRB', simulate=not self.quiet)
-            ]
-        else:
-            self.strips = [
-                neopixel.NeoPixel(
-                    Pin(18), 170, auto_write=False, pixel_order='GRB'),
-                neopixel.NeoPixel(
-                    Pin(18), 170, auto_write=False, pixel_order='GRB')
-            ]
+        self.strips = [
+            LedStrip(gpio_pin=18, led_count=170, quiet=self.quiet),
+            LedStrip(gpio_pin=19, led_count=170, quiet=self.quiet)
+        ]
+        # self.strips = [
+        #     neopixel.NeoPixel(
+        #         Pin(18), 170, auto_write=False, pixel_order='GRB'),
+        #     neopixel.NeoPixel(
+        #         Pin(19), 170, auto_write=False, pixel_order='GRB')
+        # ]
 
     def __log(self, a, sep=' => ', flush=True, end="\n"):
         print(self.__class__.__name__, a, sep=sep, flush=flush, end=end)
 
+    def write(self, animation_code, pixels):
+        eval(animation_code, {**globals(), **locals()},
+             {**globals(), **locals()})
+
+    def render(self, data, led_count, pixels):
+        for i in range(led_count):
+            pixels[i] = data[i]
+        pixels.show()
+
     def run(self):
         self.running = True
-        while True:
-            # Manual control
-            if self.running == False:
-                return
-
+        while self.running:
             data = self.packager.receive()
-            num_pixels = data['pixels_count']
-            for i in range(num_pixels):
-                self.strips[data["universe"] -
-                            1][i] = data["data"][i]
-            self.strips[data["universe"] - 1].show()
+            animation = ''.join([chr(c) for c in data['data']]).rstrip('\x00')
+            self.strips[data['universe'] - 1].set_animation(
+                lambda pixels: self.write(animation, pixels))
+            sleep(0.1)
 
     def stop(self):
         print('', flush=True)
         self.__log('Exiting...')
         self.running = False
         for strip in self.strips:
-            strip.deinit()
+            strip.stop()
 
 
 if __name__ == '__main__':
